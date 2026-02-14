@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { nanoid } from "nanoid";
-import { Group, Expense } from "./types";
+import { Group, Expense, ReceivingMethod } from "./types";
 
 interface WarikanStore {
   groups: Group[];
@@ -17,6 +17,8 @@ interface WarikanStore {
   removeExpense: (groupId: string, expenseId: string) => void;
   importGroup: (group: Group) => void;
   toggleSettlementCompleted: (groupId: string, key: string) => void;
+  resetGroupExpenses: (groupId: string) => void;
+  updateMemberPreference: (groupId: string, memberId: string, method: ReceivingMethod) => void;
 }
 
 export const useStore = create<WarikanStore>()(
@@ -135,6 +137,39 @@ export const useStore = create<WarikanStore>()(
                   completedSettlements: (g.completedSettlements || []).includes(key)
                     ? (g.completedSettlements || []).filter((k) => k !== key)
                     : [...(g.completedSettlements || []), key],
+                }
+              : g
+          ),
+        }));
+      },
+
+      resetGroupExpenses: (groupId: string) => {
+        set((state) => ({
+          groups: state.groups.map((g) =>
+            g.id === groupId
+              ? {
+                  ...g,
+                  expenses: [],
+                  completedSettlements: [],
+                  updatedAt: Date.now(),
+                }
+              : g
+          ),
+        }));
+      },
+
+      updateMemberPreference: (groupId: string, memberId: string, method: ReceivingMethod) => {
+        set((state) => ({
+          groups: state.groups.map((g) =>
+            g.id === groupId
+              ? {
+                  ...g,
+                  members: g.members.map((m) =>
+                    m.id === memberId
+                      ? { ...m, preferredReceivingMethod: method }
+                      : m
+                  ),
+                  updatedAt: Date.now(),
                 }
               : g
           ),

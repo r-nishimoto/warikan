@@ -22,8 +22,8 @@ export default function Home() {
   return (
     <div className="p-6">
       <div className="text-center py-8">
-        <h1 className="text-3xl font-bold text-blue-600">Warikan</h1>
-        <p className="text-gray-500 mt-2">割り勘計算をスムーズに</p>
+        <h1 className="text-3xl font-bold text-blue-600">Waroya</h1>
+        <p className="text-gray-500 mt-2">割り勘をもっとスムーズに</p>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm p-6 mb-8">

@@ -6,11 +6,11 @@ import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { formatCurrency, formatNumberWithCommas, removeCommas } from "@/lib/utils";
 import { encodeGroupForSharing, shareGroup } from "@/lib/sharing";
-import { Expense, PaymentMethod, PAYMENT_METHODS } from "@/lib/types";
+import { Expense, PaymentMethod, PAYMENT_METHODS, ReceivingMethod, RECEIVING_METHODS } from "@/lib/types";
 
 export default function GroupPage() {
   const { id } = useParams<{ id: string }>();
-  const { getGroup, addMember, removeMember, addExpense, updateExpense, removeExpense } =
+  const { getGroup, addMember, removeMember, addExpense, updateExpense, removeExpense, resetGroupExpenses, updateMemberPreference } =
     useStore();
   const group = getGroup(id);
 
@@ -211,20 +211,31 @@ export default function GroupPage() {
         {group.members.length === 0 ? (
           <p className="text-gray-300 text-sm">メンバーを追加してください</p>
         ) : (
-          <div className="flex flex-wrap gap-2">
+          <div className="space-y-2">
             {group.members.map((member) => (
-              <span
+              <div
                 key={member.id}
-                className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-100 rounded-full text-sm"
+                className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2"
               >
-                {member.name}
+                <span className="text-sm font-medium flex-shrink-0">{member.name}</span>
+                <select
+                  value={member.preferredReceivingMethod || "any"}
+                  onChange={(e) => updateMemberPreference(group.id, member.id, e.target.value as ReceivingMethod)}
+                  className="flex-1 text-xs px-2 py-1 border border-gray-200 rounded-lg bg-white appearance-none text-gray-500"
+                >
+                  {RECEIVING_METHODS.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      受取: {m.label}
+                    </option>
+                  ))}
+                </select>
                 <button
                   onClick={() => removeMember(group.id, member.id)}
-                  className="text-gray-400 hover:text-red-400 ml-1"
+                  className="text-gray-400 hover:text-red-400 text-sm flex-shrink-0"
                 >
                   ×
                 </button>
-              </span>
+              </div>
             ))}
           </div>
         )}
@@ -512,10 +523,24 @@ export default function GroupPage() {
       {group.expenses.length > 0 && group.members.length >= 2 && (
         <Link
           href={`/group/${group.id}/settlements`}
-          className="block w-full text-center py-3 bg-green-500 text-white rounded-xl font-medium active:bg-green-600"
+          className="block w-full text-center py-3 bg-green-500 text-white rounded-xl font-medium active:bg-green-600 mb-3"
         >
           精算結果を見る
         </Link>
+      )}
+
+      {/* グループリセットボタン */}
+      {group.expenses.length > 0 && (
+        <button
+          onClick={() => {
+            if (window.confirm("支出をすべて削除してグループをリセットしますか？\nメンバーはそのまま残ります。")) {
+              resetGroupExpenses(group.id);
+            }
+          }}
+          className="block w-full text-center py-3 border border-orange-300 text-orange-500 rounded-xl font-medium text-sm active:bg-orange-50"
+        >
+          精算をリセット（メンバーを残す）
+        </button>
       )}
     </div>
   );

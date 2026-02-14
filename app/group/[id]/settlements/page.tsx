@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { calculateSettlements } from "@/lib/settlement";
 import { formatCurrency } from "@/lib/utils";
-import { RoundingUnit, ROUNDING_UNITS } from "@/lib/types";
+import { RoundingUnit, ROUNDING_UNITS, RECEIVING_METHODS } from "@/lib/types";
 
 export default function SettlementsPage() {
   const { id } = useParams<{ id: string }>();
@@ -31,6 +31,12 @@ export default function SettlementsPage() {
   const completedKeys = group.completedSettlements || [];
   const getMemberName = (memberId: string) =>
     group.members.find((m) => m.id === memberId)?.name || "不明";
+  const getMemberReceivingMethod = (memberId: string) => {
+    const member = group.members.find((m) => m.id === memberId);
+    const method = member?.preferredReceivingMethod;
+    if (!method || method === "any") return null;
+    return RECEIVING_METHODS.find((m) => m.value === method)?.label || null;
+  };
 
   const getSettlementKey = (from: string, to: string) => `${from}->${to}`;
   const allCompleted = settlements.length > 0 && settlements.every((s) =>
@@ -46,8 +52,10 @@ export default function SettlementsPage() {
     settlements.forEach((s) => {
       const key = getSettlementKey(s.from, s.to);
       const done = completedKeys.includes(key);
+      const receivingMethod = getMemberReceivingMethod(s.to);
+      const methodSuffix = receivingMethod ? `（${receivingMethod}で）` : "";
       lines.push(
-        `${done ? "✅ " : ""}${getMemberName(s.from)} → ${getMemberName(s.to)}：${formatCurrency(s.amount)}`
+        `${done ? "✅ " : ""}${getMemberName(s.from)} → ${getMemberName(s.to)}：${formatCurrency(s.amount)}${methodSuffix}`
       );
     });
     return lines.join("\n");
@@ -118,6 +126,7 @@ export default function SettlementsPage() {
             {settlements.map((s, i) => {
               const key = getSettlementKey(s.from, s.to);
               const isCompleted = completedKeys.includes(key);
+              const receivingMethod = getMemberReceivingMethod(s.to);
               return (
                 <div
                   key={i}
@@ -147,6 +156,11 @@ export default function SettlementsPage() {
                         {getMemberName(s.to)}
                       </span>
                     </div>
+                    {receivingMethod && (
+                      <span className="text-xs text-blue-500 mt-0.5">
+                        {receivingMethod}で受取希望
+                      </span>
+                    )}
                   </div>
                   <div className={`text-lg font-bold ${isCompleted ? "line-through opacity-60" : ""}`}>
                     {formatCurrency(s.amount)}

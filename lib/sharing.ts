@@ -5,7 +5,7 @@ interface MinimalGroup {
   i: string;
   n: string;
   c: string;
-  m: Array<{ i: string; n: string }>;
+  m: Array<{ i: string; n: string; rm?: string }>;
   e: Array<{
     i: string;
     d: string;
@@ -24,7 +24,7 @@ export function encodeGroupForSharing(group: Group): string {
     i: group.id,
     n: group.name,
     c: group.currency,
-    m: group.members.map((m) => ({ i: m.id, n: m.name })),
+    m: group.members.map((m) => ({ i: m.id, n: m.name, rm: m.preferredReceivingMethod })),
     e: group.expenses.map((e) => ({
       i: e.id,
       d: e.description,
@@ -49,7 +49,7 @@ export function decodeGroupFromSharing(encoded: string): Group | null {
       id: minimal.i,
       name: minimal.n,
       currency: minimal.c,
-      members: minimal.m.map((m) => ({ id: m.i, name: m.n })),
+      members: minimal.m.map((m) => ({ id: m.i, name: m.n, preferredReceivingMethod: (m.rm as "paypay" | "cash" | "bank" | "any") || undefined })),
       expenses: minimal.e.map((e) => ({
         id: e.i,
         description: e.d,
@@ -72,7 +72,7 @@ export function decodeGroupFromSharing(encoded: string): Group | null {
 export async function shareGroup(url: string, groupName: string) {
   if (typeof navigator !== "undefined" && navigator.share) {
     await navigator.share({
-      title: `Warikan: ${groupName}`,
+      title: `Waroya: ${groupName}`,
       text: `「${groupName}」の割り勘グループに参加しよう`,
       url,
     });
