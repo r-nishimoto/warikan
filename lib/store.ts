@@ -19,6 +19,7 @@ interface WarikanStore {
   toggleSettlementCompleted: (groupId: string, key: string) => void;
   resetGroupExpenses: (groupId: string) => void;
   updateMemberPreference: (groupId: string, memberId: string, method: ReceivingMethod) => void;
+  updateGroupName: (groupId: string, name: string) => void;
 }
 
 export const useStore = create<WarikanStore>()(
@@ -171,6 +172,16 @@ export const useStore = create<WarikanStore>()(
                   ),
                   updatedAt: Date.now(),
                 }
+              : g
+          ),
+        }));
+      },
+
+      updateGroupName: (groupId: string, name: string) => {
+        set((state) => ({
+          groups: state.groups.map((g) =>
+            g.id === groupId
+              ? { ...g, name, updatedAt: Date.now() }
               : g
           ),
         }));
