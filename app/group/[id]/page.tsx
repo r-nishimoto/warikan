@@ -10,9 +10,14 @@ import { Expense, PaymentMethod, PAYMENT_METHODS, ReceivingMethod, RECEIVING_MET
 
 export default function GroupPage() {
   const { id } = useParams<{ id: string }>();
-  const { getGroup, addMember, removeMember, addExpense, updateExpense, removeExpense, resetGroupExpenses, updateMemberPreference } =
+  const { getGroup, addMember, removeMember, addExpense, updateExpense, removeExpense, resetGroupExpenses, updateMemberPreference, updateGroupName } =
     useStore();
   const group = getGroup(id);
+
+  // グループ名編集
+  const [editingGroupName, setEditingGroupName] = useState(false);
+  const [groupNameInput, setGroupNameInput] = useState("");
+  const [groupNameComposing, setGroupNameComposing] = useState(false);
 
   const [memberName, setMemberName] = useState("");
   const [memberComposing, setMemberComposing] = useState(false);
@@ -176,7 +181,59 @@ export default function GroupPage() {
         </button>
       </div>
 
-      <h1 className="text-2xl font-bold mb-1">{group.name}</h1>
+      {editingGroupName ? (
+        <div className="mb-1 space-y-2">
+          <input
+            type="text"
+            value={groupNameInput}
+            onChange={(e) => setGroupNameInput(e.target.value)}
+            onCompositionStart={() => setGroupNameComposing(true)}
+            onCompositionEnd={() => setGroupNameComposing(false)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !groupNameComposing) {
+                if (groupNameInput.trim()) {
+                  updateGroupName(group.id, groupNameInput.trim());
+                }
+                setEditingGroupName(false);
+              }
+              if (e.key === "Escape") setEditingGroupName(false);
+            }}
+            autoFocus
+            className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-2xl font-bold"
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={() => setEditingGroupName(false)}
+              className="flex-1 py-2 border border-gray-200 text-gray-600 rounded-xl font-medium text-sm active:bg-gray-50"
+            >
+              キャンセル
+            </button>
+            <button
+              onClick={() => {
+                if (groupNameInput.trim()) {
+                  updateGroupName(group.id, groupNameInput.trim());
+                }
+                setEditingGroupName(false);
+              }}
+              disabled={!groupNameInput.trim()}
+              className="flex-1 py-2 bg-blue-500 text-white rounded-xl font-medium text-sm disabled:opacity-40 active:bg-blue-600"
+            >
+              保存
+            </button>
+          </div>
+        </div>
+      ) : (
+        <h1
+          className="text-2xl font-bold mb-1 flex items-center gap-2 cursor-pointer group"
+          onClick={() => {
+            setGroupNameInput(group.name);
+            setEditingGroupName(true);
+          }}
+        >
+          {group.name}
+          <span className="text-gray-300 group-hover:text-gray-400 text-sm font-normal">✏️</span>
+        </h1>
+      )}
       <p className="text-gray-400 text-sm mb-6">
         合計: {formatCurrency(totalExpenses)}
       </p>
