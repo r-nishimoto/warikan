@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { calculateSettlements } from "@/lib/settlement";
 import { formatCurrency } from "@/lib/utils";
+import { encodeGroupForSharing } from "@/lib/sharing";
 import { RoundingUnit, ROUNDING_UNITS, RECEIVING_METHODS } from "@/lib/types";
 
 export default function SettlementsPage() {
@@ -68,7 +69,9 @@ export default function SettlementsPage() {
   };
 
   const handleCopyUrl = async () => {
-    await navigator.clipboard.writeText(window.location.href);
+    const encoded = encodeGroupForSharing(group);
+    const url = `${window.location.origin}/shared/${encoded}`;
+    await navigator.clipboard.writeText(url);
     setCopiedUrl(true);
     setTimeout(() => setCopiedUrl(false), 2000);
   };
