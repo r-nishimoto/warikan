@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useStore } from "@/lib/store";
+import { useGroups } from "@/lib/useGroups";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 
@@ -10,11 +10,11 @@ export default function Home() {
   const [name, setName] = useState("");
   const [composing, setComposing] = useState(false);
   const router = useRouter();
-  const { groups, addGroup, deleteGroup } = useStore();
+  const { groups, loading, addGroup, deleteGroup } = useGroups();
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!name.trim()) return;
-    const group = addGroup(name.trim());
+    const group = await addGroup(name.trim());
     setName("");
     router.push(`/group/${group.id}`);
   };
@@ -51,7 +51,11 @@ export default function Home() {
         </div>
       </div>
 
-      {groups.length > 0 && (
+      {loading ? (
+        <div className="text-center py-8">
+          <p className="text-gray-400 text-sm">読み込み中...</p>
+        </div>
+      ) : groups.length > 0 ? (
         <div>
           <h2 className="text-lg font-semibold mb-3">グループ一覧</h2>
           <div className="space-y-3">
@@ -89,7 +93,7 @@ export default function Home() {
               ))}
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

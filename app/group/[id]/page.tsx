@@ -3,16 +3,25 @@
 import { useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { useStore } from "@/lib/store";
+import { useGroup } from "@/lib/useGroup";
 import { formatCurrency, formatNumberWithCommas, removeCommas } from "@/lib/utils";
-import { encodeGroupForSharing, shareGroup } from "@/lib/sharing";
 import { Expense, PaymentMethod, PAYMENT_METHODS, ReceivingMethod, RECEIVING_METHODS } from "@/lib/types";
 
 export default function GroupPage() {
   const { id } = useParams<{ id: string }>();
-  const { getGroup, addMember, removeMember, addExpense, updateExpense, removeExpense, resetGroupExpenses, updateMemberPreference, updateGroupName } =
-    useStore();
-  const group = getGroup(id);
+  const {
+    group,
+    loading,
+    error,
+    addMember,
+    removeMember,
+    addExpense,
+    updateExpense,
+    removeExpense,
+    resetGroupExpenses,
+    updateMemberPreference,
+    updateGroupName,
+  } = useGroup(id);
 
   // グループ名編集
   const [editingGroupName, setEditingGroupName] = useState(false);
@@ -57,12 +66,12 @@ export default function GroupPage() {
     setEditingId(null);
   };
 
-  const handleSaveEdit = useCallback(() => {
+  const handleSaveEdit = useCallback(async () => {
     if (!group || !editingId) return;
     const numAmount = parseInt(editAmount, 10);
     if (!editDesc.trim() || !numAmount || !editPaidBy || editSplitAmong.length === 0)
       return;
-    updateExpense(group.id, editingId, {
+    await updateExpense(editingId, {
       description: editDesc.trim(),
       amount: numAmount,
       paidBy: editPaidBy,
@@ -82,7 +91,7 @@ export default function GroupPage() {
     );
   };
 
-  const handleAddMember = useCallback(() => {
+  const handleAddMember = useCallback(async () => {
     if (!memberName.trim() || !group) return;
     const trimmed = memberName.trim();
     if (group.members.some((m) => m.name === trimmed)) {
@@ -91,16 +100,23 @@ export default function GroupPage() {
       return;
     }
     setMemberError("");
-    addMember(group.id, trimmed);
+    await addMember(trimmed);
     setMemberName("");
   }, [memberName, group, addMember]);
 
   const handleShare = useCallback(async () => {
     if (!group) return;
-    const encoded = encodeGroupForSharing(group);
-    const url = `${window.location.origin}/shared/${encoded}`;
+    const url = `${window.location.origin}/group/${group.id}`;
     try {
-      await shareGroup(url, group.name);
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({
+          title: `Waroya: ${group.name}`,
+          text: `「${group.name}」の割り勘グループに参加しよう`,
+          url,
+        });
+      } else if (typeof navigator !== "undefined" && navigator.clipboard) {
+        await navigator.clipboard.writeText(url);
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -108,12 +124,12 @@ export default function GroupPage() {
     }
   }, [group]);
 
-  const handleAddExpense = useCallback(() => {
+  const handleAddExpense = useCallback(async () => {
     if (!group) return;
     const numAmount = parseInt(amount, 10);
     if (!description.trim() || !numAmount || !paidBy || splitAmong.length === 0)
       return;
-    addExpense(group.id, {
+    await addExpense({
       description: description.trim(),
       amount: numAmount,
       paidBy,
@@ -143,10 +159,18 @@ export default function GroupPage() {
     setSplitAmong(group.members.map((m) => m.id));
   };
 
-  if (!group) {
+  if (loading) {
     return (
       <div className="p-6 text-center py-20">
-        <p className="text-gray-400 mb-4">グループが見つかりません</p>
+        <p className="text-gray-400">読み込み中...</p>
+      </div>
+    );
+  }
+
+  if (error || !group) {
+    return (
+      <div className="p-6 text-center py-20">
+        <p className="text-gray-400 mb-4">{error || "グループが見つかりません"}</p>
         <Link href="/" className="text-blue-500">
           ホームに戻る
         </Link>
@@ -192,7 +216,7 @@ export default function GroupPage() {
             onKeyDown={(e) => {
               if (e.key === "Enter" && !groupNameComposing) {
                 if (groupNameInput.trim()) {
-                  updateGroupName(group.id, groupNameInput.trim());
+                  updateGroupName(groupNameInput.trim());
                 }
                 setEditingGroupName(false);
               }
@@ -211,7 +235,7 @@ export default function GroupPage() {
             <button
               onClick={() => {
                 if (groupNameInput.trim()) {
-                  updateGroupName(group.id, groupNameInput.trim());
+                  updateGroupName(groupNameInput.trim());
                 }
                 setEditingGroupName(false);
               }}
@@ -277,7 +301,7 @@ export default function GroupPage() {
                 <span className="text-sm font-medium flex-shrink-0">{member.name}</span>
                 <select
                   value={member.preferredReceivingMethod || "any"}
-                  onChange={(e) => updateMemberPreference(group.id, member.id, e.target.value as ReceivingMethod)}
+                  onChange={(e) => updateMemberPreference(member.id, e.target.value as ReceivingMethod)}
                   className="flex-1 text-xs px-2 py-1 border border-gray-200 rounded-lg bg-white appearance-none text-gray-500"
                 >
                   {RECEIVING_METHODS.map((m) => (
@@ -287,7 +311,7 @@ export default function GroupPage() {
                   ))}
                 </select>
                 <button
-                  onClick={() => removeMember(group.id, member.id)}
+                  onClick={() => removeMember(member.id)}
                   className="text-gray-400 hover:text-red-400 text-sm flex-shrink-0"
                 >
                   ×
@@ -561,7 +585,7 @@ export default function GroupPage() {
                         onClick={(e) => {
                           e.stopPropagation();
                           if (window.confirm(`「${expense.description}」を本当に削除しますか？`)) {
-                            removeExpense(group.id, expense.id);
+                            removeExpense(expense.id);
                           }
                         }}
                         className="px-2 py-1 text-xs text-red-400 border border-red-200 rounded-lg hover:bg-red-50"
@@ -591,7 +615,7 @@ export default function GroupPage() {
         <button
           onClick={() => {
             if (window.confirm("支出をすべて削除してグループをリセットしますか？\nメンバーはそのまま残ります。")) {
-              resetGroupExpenses(group.id);
+              resetGroupExpenses();
             }
           }}
           className="block w-full text-center py-3 border border-orange-300 text-orange-500 rounded-xl font-medium text-sm active:bg-orange-50"

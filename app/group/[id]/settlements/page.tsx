@@ -3,24 +3,30 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { useStore } from "@/lib/store";
+import { useGroup } from "@/lib/useGroup";
 import { calculateSettlements } from "@/lib/settlement";
 import { formatCurrency } from "@/lib/utils";
-import { encodeGroupForSharing } from "@/lib/sharing";
 import { RoundingUnit, ROUNDING_UNITS, RECEIVING_METHODS } from "@/lib/types";
 
 export default function SettlementsPage() {
   const { id } = useParams<{ id: string }>();
-  const { getGroup, toggleSettlementCompleted } = useStore();
-  const group = getGroup(id);
+  const { group, loading, error, toggleSettlementCompleted } = useGroup(id);
   const [copiedText, setCopiedText] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [roundingUnit, setRoundingUnit] = useState<RoundingUnit>(1);
 
-  if (!group) {
+  if (loading) {
     return (
       <div className="p-6 text-center py-20">
-        <p className="text-gray-400 mb-4">グループが見つかりません</p>
+        <p className="text-gray-400">読み込み中...</p>
+      </div>
+    );
+  }
+
+  if (error || !group) {
+    return (
+      <div className="p-6 text-center py-20">
+        <p className="text-gray-400 mb-4">{error || "グループが見つかりません"}</p>
         <Link href="/" className="text-blue-500">
           ホームに戻る
         </Link>
@@ -69,8 +75,7 @@ export default function SettlementsPage() {
   };
 
   const handleCopyUrl = async () => {
-    const encoded = encodeGroupForSharing(group);
-    const url = `${window.location.origin}/shared/${encoded}`;
+    const url = `${window.location.origin}/group/${group.id}`;
     await navigator.clipboard.writeText(url);
     setCopiedUrl(true);
     setTimeout(() => setCopiedUrl(false), 2000);
@@ -140,7 +145,7 @@ export default function SettlementsPage() {
                   }`}
                 >
                   <button
-                    onClick={() => toggleSettlementCompleted(group.id, key)}
+                    onClick={() => toggleSettlementCompleted(key)}
                     className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
                       isCompleted
                         ? "bg-green-500 border-green-500 text-white"
