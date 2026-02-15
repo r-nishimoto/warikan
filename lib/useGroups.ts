@@ -74,13 +74,17 @@ export function useGroups() {
   const addGroup = useCallback(async (name: string): Promise<Group> => {
     const groupId = nanoid(8);
     const now = Date.now();
-    await supabase.from("groups").insert({
+    const { error } = await supabase.from("groups").insert({
       id: groupId,
       name,
       currency: "JPY",
       created_at: now,
       updated_at: now,
     });
+    if (error) {
+      console.error("Failed to create group:", error);
+      throw new Error("グループの作成に失敗しました");
+    }
     addLocalGroupId(groupId);
 
     const newGroup: Group = {
