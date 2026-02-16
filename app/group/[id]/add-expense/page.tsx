@@ -19,8 +19,8 @@ export default function AddExpensePage() {
   if (!group) {
     return (
       <div className="p-6 text-center py-20">
-        <p className="text-gray-400 mb-4">グループが見つかりません</p>
-        <Link href="/" className="text-blue-500">
+        <p className="text-zinc-500 mb-4">グループが見つかりません</p>
+        <Link href="/" className="text-blue-400">
           ホームに戻る
         </Link>
       </div>
@@ -64,7 +64,7 @@ export default function AddExpensePage() {
   return (
     <div className="p-6">
       <div className="flex items-center mb-6">
-        <Link href={`/group/${group.id}`} className="text-blue-500 text-sm">
+        <Link href={`/group/${group.id}`} className="text-blue-400 text-sm">
           ← 戻る
         </Link>
       </div>
@@ -74,7 +74,7 @@ export default function AddExpensePage() {
       <div className="space-y-5">
         {/* 内容 */}
         <div>
-          <label className="block text-sm font-medium text-gray-600 mb-1.5">
+          <label className="block text-sm font-medium text-zinc-400 mb-1.5">
             内容
           </label>
           <input
@@ -82,13 +82,13 @@ export default function AddExpensePage() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="例: 居酒屋での夕食"
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-base"
+            className="w-full px-4 py-3 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-base placeholder:text-zinc-500"
           />
         </div>
 
         {/* 金額 */}
         <div>
-          <label className="block text-sm font-medium text-gray-600 mb-1.5">
+          <label className="block text-sm font-medium text-zinc-400 mb-1.5">
             金額（円）
           </label>
           <input
@@ -100,13 +100,13 @@ export default function AddExpensePage() {
               setAmount(v);
             }}
             placeholder="例: 12000"
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-base"
+            className="w-full px-4 py-3 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-base placeholder:text-zinc-500"
           />
         </div>
 
         {/* 支払った人 */}
         <div>
-          <label className="block text-sm font-medium text-gray-600 mb-1.5">
+          <label className="block text-sm font-medium text-zinc-400 mb-1.5">
             誰が支払った？
           </label>
           <div className="grid grid-cols-2 gap-2">
@@ -117,7 +117,7 @@ export default function AddExpensePage() {
                 className={`px-4 py-2.5 rounded-xl text-sm font-medium border transition-colors ${
                   paidBy === member.id
                     ? "bg-blue-500 text-white border-blue-500"
-                    : "bg-white border-gray-200 text-gray-700 active:bg-gray-50"
+                    : "bg-zinc-800 border-zinc-700 text-zinc-300 active:bg-zinc-700"
                 }`}
               >
                 {member.name}
@@ -129,12 +129,12 @@ export default function AddExpensePage() {
         {/* 分割対象 */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="block text-sm font-medium text-gray-600">
+            <label className="block text-sm font-medium text-zinc-400">
               誰で割り勘？
             </label>
             <button
               onClick={selectAll}
-              className="text-xs text-blue-500 active:text-blue-700"
+              className="text-xs text-blue-400 active:text-blue-300"
             >
               全員選択
             </button>
@@ -146,8 +146,8 @@ export default function AddExpensePage() {
                 onClick={() => toggleMember(member.id)}
                 className={`px-4 py-2.5 rounded-xl text-sm font-medium border transition-colors ${
                   splitAmong.includes(member.id)
-                    ? "bg-green-500 text-white border-green-500"
-                    : "bg-white border-gray-200 text-gray-700 active:bg-gray-50"
+                    ? "bg-emerald-500 text-white border-emerald-500"
+                    : "bg-zinc-800 border-zinc-700 text-zinc-300 active:bg-zinc-700"
                 }`}
               >
                 {member.name}
@@ -160,7 +160,7 @@ export default function AddExpensePage() {
         <button
           onClick={handleSubmit}
           disabled={!isValid}
-          className="w-full py-3.5 bg-blue-500 text-white rounded-xl font-medium disabled:opacity-40 active:bg-blue-600 text-base"
+          className="w-full py-3.5 bg-blue-500 text-white rounded-xl font-medium disabled:opacity-30 active:bg-blue-600 text-base"
         >
           支出を追加する
         </button>

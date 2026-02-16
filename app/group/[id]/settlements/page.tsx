@@ -18,7 +18,7 @@ export default function SettlementsPage() {
   if (loading) {
     return (
       <div className="p-6 text-center py-20">
-        <p className="text-gray-400">読み込み中...</p>
+        <p className="text-zinc-500">読み込み中...</p>
       </div>
     );
   }
@@ -26,8 +26,8 @@ export default function SettlementsPage() {
   if (error || !group) {
     return (
       <div className="p-6 text-center py-20">
-        <p className="text-gray-400 mb-4">{error || "グループが見つかりません"}</p>
-        <Link href="/" className="text-blue-500">
+        <p className="text-zinc-500 mb-4">{error || "グループが見つかりません"}</p>
+        <Link href="/" className="text-blue-400">
           ホームに戻る
         </Link>
       </div>
@@ -90,18 +90,18 @@ export default function SettlementsPage() {
   return (
     <div className="p-6">
       <div className="flex items-center mb-6">
-        <Link href={`/group/${group.id}`} className="text-blue-500 text-sm">
+        <Link href={`/group/${group.id}`} className="text-blue-400 text-sm">
           ← 戻る
         </Link>
       </div>
 
       <h1 className="text-xl font-bold mb-2">精算結果</h1>
-      <p className="text-gray-400 text-sm mb-6">{group.name}</p>
+      <p className="text-zinc-500 text-sm mb-6">{group.name}</p>
 
       {/* 端数処理の選択 */}
       <div className="mb-6">
-        <label className="block text-xs text-gray-500 mb-2">端数処理</label>
-        <div className="flex rounded-xl overflow-hidden border border-gray-200">
+        <label className="block text-xs text-zinc-500 mb-2">端数処理</label>
+        <div className="flex rounded-xl overflow-hidden border border-zinc-800">
           {ROUNDING_UNITS.map((unit) => (
             <button
               key={unit.value}
@@ -109,7 +109,7 @@ export default function SettlementsPage() {
               className={`flex-1 py-2 text-sm font-medium transition-colors ${
                 roundingUnit === unit.value
                   ? "bg-blue-500 text-white"
-                  : "bg-white text-gray-600 active:bg-gray-50"
+                  : "bg-zinc-900 text-zinc-400 active:bg-zinc-800"
               }`}
             >
               {unit.label}
@@ -120,13 +120,13 @@ export default function SettlementsPage() {
 
       {settlements.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-400">精算の必要はありません</p>
+          <p className="text-zinc-500">精算の必要はありません</p>
         </div>
       ) : (
         <>
           {allCompleted && (
-            <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4 text-center">
-              <p className="text-green-600 font-medium">🎉 すべての精算が完了しました！</p>
+            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 mb-4 text-center">
+              <p className="text-emerald-400 font-medium">🎉 すべての精算が完了しました！</p>
             </div>
           )}
 
@@ -138,34 +138,34 @@ export default function SettlementsPage() {
               return (
                 <div
                   key={i}
-                  className={`rounded-2xl shadow-sm p-5 flex items-center gap-4 transition-colors ${
+                  className={`rounded-2xl p-5 flex items-center gap-4 transition-colors ${
                     isCompleted
-                      ? "bg-green-50 border border-green-200"
-                      : "bg-white"
+                      ? "bg-emerald-500/10 border border-emerald-500/30"
+                      : "bg-zinc-900 border border-zinc-800"
                   }`}
                 >
                   <button
                     onClick={() => toggleSettlementCompleted(key)}
                     className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
                       isCompleted
-                        ? "bg-green-500 border-green-500 text-white"
-                        : "border-gray-300 text-transparent hover:border-gray-400"
+                        ? "bg-emerald-500 border-emerald-500 text-white"
+                        : "border-zinc-600 text-transparent hover:border-zinc-500"
                     }`}
                   >
                     ✓
                   </button>
                   <div className="flex-1">
                     <div className={`flex items-center gap-2 text-base ${isCompleted ? "line-through opacity-60" : ""}`}>
-                      <span className="font-semibold text-red-500">
+                      <span className="font-semibold text-rose-400">
                         {getMemberName(s.from)}
                       </span>
-                      <span className="text-gray-400">→</span>
-                      <span className="font-semibold text-green-600">
+                      <span className="text-zinc-500">→</span>
+                      <span className="font-semibold text-emerald-400">
                         {getMemberName(s.to)}
                       </span>
                     </div>
                     {receivingMethod && (
-                      <span className="text-xs text-blue-500 mt-0.5">
+                      <span className="text-xs text-blue-400 mt-0.5">
                         {receivingMethod}で受取希望
                       </span>
                     )}
@@ -188,7 +188,7 @@ export default function SettlementsPage() {
               </button>
               <button
                 onClick={handleCopyUrl}
-                className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium text-sm active:bg-gray-200"
+                className="flex-1 py-3 bg-zinc-800 text-zinc-300 rounded-xl font-medium text-sm active:bg-zinc-700"
               >
                 {copiedUrl ? "コピーしました!" : "URLをコピー"}
               </button>
@@ -206,7 +206,7 @@ export default function SettlementsPage() {
         </>
       )}
 
-      <div className="mt-8 text-center text-xs text-gray-300">
+      <div className="mt-8 text-center text-xs text-zinc-600">
         支払い回数を最小化して計算しています
       </div>
     </div>

@@ -22,11 +22,11 @@ export default function Home() {
   return (
     <div className="p-6">
       <div className="text-center py-8">
-        <h1 className="text-3xl font-bold text-blue-600">Waroya</h1>
-        <p className="text-gray-500 mt-2">割り勘をもっとスムーズに</p>
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Waroya</h1>
+        <p className="text-zinc-500 mt-2">割り勘をもっとスムーズに</p>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm p-6 mb-8">
+      <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 mb-8">
         <h2 className="text-lg font-semibold mb-4">新しいグループを作成</h2>
         <div className="flex gap-3">
           <input
@@ -39,12 +39,12 @@ export default function Home() {
               if (e.key === "Enter" && !composing) handleCreate();
             }}
             placeholder="例: 箱根旅行"
-            className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-base"
+            className="flex-1 px-4 py-3 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-base placeholder:text-zinc-500"
           />
           <button
             onClick={handleCreate}
             disabled={!name.trim()}
-            className="px-6 py-3 bg-blue-500 text-white rounded-xl font-medium disabled:opacity-40 active:bg-blue-600"
+            className="px-6 py-3 bg-blue-500 text-white rounded-xl font-medium disabled:opacity-30 active:bg-blue-600"
           >
             作成
           </button>
@@ -53,7 +53,7 @@ export default function Home() {
 
       {loading ? (
         <div className="text-center py-8">
-          <p className="text-gray-400 text-sm">読み込み中...</p>
+          <p className="text-zinc-500 text-sm">読み込み中...</p>
         </div>
       ) : groups.length > 0 ? (
         <div>
@@ -64,7 +64,7 @@ export default function Home() {
               .map((group) => (
                   <div
                     key={group.id}
-                    className="bg-white rounded-2xl shadow-sm p-5"
+                    className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5"
                   >
                       <div className="flex items-center justify-between">
                         <Link
@@ -72,7 +72,7 @@ export default function Home() {
                           className="flex-1 min-w-0"
                         >
                           <div className="text-lg font-bold truncate mb-1">{group.name}</div>
-                          <div className="text-sm text-gray-400">
+                          <div className="text-sm text-zinc-500">
                             {group.members.length}人 ・ {group.expenses.length}件の支出 ・ {formatCurrency(group.expenses.reduce((sum, e) => sum + e.amount, 0))}
                           </div>
                         </Link>
@@ -83,7 +83,7 @@ export default function Home() {
                                 deleteGroup(group.id);
                               }
                             }}
-                            className="px-3 py-1.5 text-xs text-red-400 border border-red-200 rounded-lg hover:bg-red-50 active:bg-red-100"
+                            className="px-3 py-1.5 text-xs text-rose-400 border border-rose-500/30 rounded-lg hover:bg-rose-500/10 active:bg-rose-500/20"
                           >
                             削除
                           </button>

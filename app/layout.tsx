@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   description: "旅行やイベントの割り勘計算をスムーズに",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "Waroya",
   },
 };
@@ -21,7 +21,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#3b82f6",
+  themeColor: "#09090b",
 };
 
 export default function RootLayout({

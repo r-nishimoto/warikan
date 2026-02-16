@@ -162,7 +162,7 @@ export default function GroupPage() {
   if (loading) {
     return (
       <div className="p-6 text-center py-20">
-        <p className="text-gray-400">読み込み中...</p>
+        <p className="text-zinc-500">読み込み中...</p>
       </div>
     );
   }
@@ -170,8 +170,8 @@ export default function GroupPage() {
   if (error || !group) {
     return (
       <div className="p-6 text-center py-20">
-        <p className="text-gray-400 mb-4">{error || "グループが見つかりません"}</p>
-        <Link href="/" className="text-blue-500">
+        <p className="text-zinc-500 mb-4">{error || "グループが見つかりません"}</p>
+        <Link href="/" className="text-blue-400">
           ホームに戻る
         </Link>
       </div>
@@ -194,12 +194,12 @@ export default function GroupPage() {
     <div className="p-6 pb-8">
       {/* ヘッダー */}
       <div className="flex items-center justify-between mb-6">
-        <Link href="/" className="text-blue-500 text-sm">
+        <Link href="/" className="text-blue-400 text-sm">
           ← 戻る
         </Link>
         <button
           onClick={handleShare}
-          className="text-sm px-4 py-2 bg-blue-50 text-blue-600 rounded-lg active:bg-blue-100"
+          className="text-sm px-4 py-2 bg-blue-500/10 text-blue-400 rounded-lg active:bg-blue-500/20"
         >
           {copied ? "コピーしました!" : "共有"}
         </button>
@@ -223,12 +223,12 @@ export default function GroupPage() {
               if (e.key === "Escape") setEditingGroupName(false);
             }}
             autoFocus
-            className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-2xl font-bold"
+            className="w-full px-3 py-2 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-2xl font-bold"
           />
           <div className="flex gap-2">
             <button
               onClick={() => setEditingGroupName(false)}
-              className="flex-1 py-2 border border-gray-200 text-gray-600 rounded-xl font-medium text-sm active:bg-gray-50"
+              className="flex-1 py-2 border border-zinc-700 text-zinc-400 rounded-xl font-medium text-sm active:bg-zinc-800"
             >
               キャンセル
             </button>
@@ -240,7 +240,7 @@ export default function GroupPage() {
                 setEditingGroupName(false);
               }}
               disabled={!groupNameInput.trim()}
-              className="flex-1 py-2 bg-blue-500 text-white rounded-xl font-medium text-sm disabled:opacity-40 active:bg-blue-600"
+              className="flex-1 py-2 bg-blue-500 text-white rounded-xl font-medium text-sm disabled:opacity-30 active:bg-blue-600"
             >
               保存
             </button>
@@ -255,10 +255,10 @@ export default function GroupPage() {
           }}
         >
           {group.name}
-          <span className="text-gray-300 group-hover:text-gray-400 text-sm font-normal">✏️</span>
+          <span className="text-zinc-600 group-hover:text-zinc-500 text-sm font-normal">✏️</span>
         </h1>
       )}
-      <p className="text-gray-400 text-sm mb-6">
+      <p className="text-zinc-500 text-sm mb-6">
         合計: {formatCurrency(totalExpenses)}
       </p>
 
@@ -276,33 +276,33 @@ export default function GroupPage() {
               if (e.key === "Enter" && !memberComposing) handleAddMember();
             }}
             placeholder="名前を入力"
-            className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+            className="flex-1 px-4 py-2.5 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-zinc-500"
           />
           <button
             onClick={handleAddMember}
             disabled={!memberName.trim()}
-            className="px-4 py-2.5 bg-blue-500 text-white rounded-xl text-sm font-medium disabled:opacity-40"
+            className="px-4 py-2.5 bg-blue-500 text-white rounded-xl text-sm font-medium disabled:opacity-30"
           >
             追加
           </button>
         </div>
         {memberError && (
-          <p className="text-red-500 text-xs mb-2">{memberError}</p>
+          <p className="text-rose-400 text-xs mb-2">{memberError}</p>
         )}
         {group.members.length === 0 ? (
-          <p className="text-gray-300 text-sm">メンバーを追加してください</p>
+          <p className="text-zinc-600 text-sm">メンバーを追加してください</p>
         ) : (
           <div className="space-y-2">
             {group.members.map((member) => (
               <div
                 key={member.id}
-                className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2"
+                className="flex items-center gap-2 bg-zinc-800/50 rounded-xl px-3 py-2"
               >
                 <span className="text-sm font-medium flex-shrink-0">{member.name}</span>
                 <select
                   value={member.preferredReceivingMethod || "any"}
                   onChange={(e) => updateMemberPreference(member.id, e.target.value as ReceivingMethod)}
-                  className="flex-1 text-xs px-2 py-1 border border-gray-200 rounded-lg bg-white appearance-none text-gray-500"
+                  className="flex-1 text-xs px-2 py-1 border border-zinc-700 rounded-lg bg-zinc-800 appearance-none text-zinc-500"
                 >
                   {RECEIVING_METHODS.map((m) => (
                     <option key={m.value} value={m.value}>
@@ -312,7 +312,7 @@ export default function GroupPage() {
                 </select>
                 <button
                   onClick={() => removeMember(member.id)}
-                  className="text-gray-400 hover:text-red-400 text-sm flex-shrink-0"
+                  className="text-zinc-500 hover:text-rose-400 text-sm flex-shrink-0"
                 >
                   ×
                 </button>
@@ -326,7 +326,7 @@ export default function GroupPage() {
       {group.members.length >= 2 && (
         <section className="mb-8">
           <h2 className="text-base font-semibold mb-3">支出を追加</h2>
-          <div className="bg-white rounded-2xl shadow-sm p-5 space-y-4">
+          <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5 space-y-4">
             <input
               type="text"
               value={description}
@@ -338,7 +338,7 @@ export default function GroupPage() {
                   handleAddExpense();
               }}
               placeholder="内容（例: 居酒屋での夕食）"
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+              className="w-full px-4 py-2.5 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-zinc-500"
             />
             <input
               type="text"
@@ -349,27 +349,27 @@ export default function GroupPage() {
                 setAmount(v);
               }}
               placeholder="金額（円）"
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+              className="w-full px-4 py-2.5 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-zinc-500"
             />
             <div>
-              <label className="block text-xs text-gray-500 mb-1.5">
+              <label className="block text-xs text-zinc-500 mb-1.5">
                 日付（任意）
               </label>
               <input
                 type="date"
                 value={expenseDate}
                 onChange={(e) => setExpenseDate(e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+                className="w-full px-4 py-2.5 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1.5">
+              <label className="block text-xs text-zinc-500 mb-1.5">
                 誰が支払った？
               </label>
               <select
                 value={paidBy}
                 onChange={(e) => setPaidBy(e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm bg-white appearance-none"
+                className="w-full px-4 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-zinc-800 appearance-none"
               >
                 <option value="">選択してください</option>
                 {group.members.map((member) => (
@@ -380,13 +380,13 @@ export default function GroupPage() {
               </select>
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1.5">
+              <label className="block text-xs text-zinc-500 mb-1.5">
                 支払い方法
               </label>
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm bg-white appearance-none"
+                className="w-full px-4 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-zinc-800 appearance-none"
               >
                 {PAYMENT_METHODS.map((method) => (
                   <option key={method.value} value={method.value}>
@@ -397,10 +397,10 @@ export default function GroupPage() {
             </div>
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs text-gray-500">誰で割り勘？</label>
+                <label className="text-xs text-zinc-500">誰で割り勘？</label>
                 <button
                   onClick={selectAllMembers}
-                  className="text-xs text-blue-500 active:text-blue-700"
+                  className="text-xs text-blue-400 active:text-blue-300"
                 >
                   全員選択
                 </button>
@@ -412,8 +412,8 @@ export default function GroupPage() {
                     onClick={() => toggleSplitMember(member.id)}
                     className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
                       splitAmong.includes(member.id)
-                        ? "bg-green-500 text-white border-green-500"
-                        : "bg-white border-gray-200 text-gray-700 active:bg-gray-50"
+                        ? "bg-emerald-500 text-white border-emerald-500"
+                        : "bg-zinc-800 border-zinc-700 text-zinc-300 active:bg-zinc-700"
                     }`}
                   >
                     {member.name}
@@ -424,7 +424,7 @@ export default function GroupPage() {
             <button
               onClick={handleAddExpense}
               disabled={!isExpenseValid}
-              className="w-full py-2.5 bg-blue-500 text-white rounded-xl font-medium text-sm disabled:opacity-40 active:bg-blue-600"
+              className="w-full py-2.5 bg-blue-500 text-white rounded-xl font-medium text-sm disabled:opacity-30 active:bg-blue-600"
             >
               支出を追加する
             </button>
@@ -449,7 +449,7 @@ export default function GroupPage() {
                   return (
                     <div
                       key={expense.id}
-                      className="bg-white rounded-2xl shadow-sm p-5 space-y-3 border-2 border-blue-400"
+                      className="bg-zinc-900 rounded-2xl border-2 border-blue-500 p-5 space-y-3"
                     >
                       <input
                         type="text"
@@ -458,7 +458,7 @@ export default function GroupPage() {
                         onCompositionStart={() => setEditDescComposing(true)}
                         onCompositionEnd={() => setEditDescComposing(false)}
                         placeholder="内容"
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+                        className="w-full px-4 py-2.5 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-zinc-500"
                       />
                       <input
                         type="text"
@@ -469,27 +469,27 @@ export default function GroupPage() {
                           setEditAmount(v);
                         }}
                         placeholder="金額（円）"
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+                        className="w-full px-4 py-2.5 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-zinc-500"
                       />
                       <div>
-                        <label className="block text-xs text-gray-500 mb-1.5">
+                        <label className="block text-xs text-zinc-500 mb-1.5">
                           日付（任意）
                         </label>
                         <input
                           type="date"
                           value={editExpenseDate}
                           onChange={(e) => setEditExpenseDate(e.target.value)}
-                          className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+                          className="w-full px-4 py-2.5 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-500 mb-1.5">
+                        <label className="block text-xs text-zinc-500 mb-1.5">
                           誰が支払った？
                         </label>
                         <select
                           value={editPaidBy}
                           onChange={(e) => setEditPaidBy(e.target.value)}
-                          className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm bg-white appearance-none"
+                          className="w-full px-4 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-zinc-800 appearance-none"
                         >
                           <option value="">選択してください</option>
                           {group.members.map((member) => (
@@ -500,13 +500,13 @@ export default function GroupPage() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-500 mb-1.5">
+                        <label className="block text-xs text-zinc-500 mb-1.5">
                           支払い方法
                         </label>
                         <select
                           value={editPaymentMethod}
                           onChange={(e) => setEditPaymentMethod(e.target.value as PaymentMethod)}
-                          className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm bg-white appearance-none"
+                          className="w-full px-4 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-zinc-800 appearance-none"
                         >
                           {PAYMENT_METHODS.map((method) => (
                             <option key={method.value} value={method.value}>
@@ -517,10 +517,10 @@ export default function GroupPage() {
                       </div>
                       <div>
                         <div className="flex items-center justify-between mb-1.5">
-                          <label className="text-xs text-gray-500">誰で割り勘？</label>
+                          <label className="text-xs text-zinc-500">誰で割り勘？</label>
                           <button
                             onClick={() => setEditSplitAmong(group.members.map((m) => m.id))}
-                            className="text-xs text-blue-500 active:text-blue-700"
+                            className="text-xs text-blue-400 active:text-blue-300"
                           >
                             全員選択
                           </button>
@@ -532,8 +532,8 @@ export default function GroupPage() {
                               onClick={() => toggleEditSplitMember(member.id)}
                               className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
                                 editSplitAmong.includes(member.id)
-                                  ? "bg-green-500 text-white border-green-500"
-                                  : "bg-white border-gray-200 text-gray-700 active:bg-gray-50"
+                                  ? "bg-emerald-500 text-white border-emerald-500"
+                                  : "bg-zinc-800 border-zinc-700 text-zinc-300 active:bg-zinc-700"
                               }`}
                             >
                               {member.name}
@@ -544,14 +544,14 @@ export default function GroupPage() {
                       <div className="flex gap-2">
                         <button
                           onClick={cancelEditing}
-                          className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl font-medium text-sm active:bg-gray-50"
+                          className="flex-1 py-2.5 border border-zinc-700 text-zinc-400 rounded-xl font-medium text-sm active:bg-zinc-800"
                         >
                           キャンセル
                         </button>
                         <button
                           onClick={handleSaveEdit}
                           disabled={!isEditValid}
-                          className="flex-1 py-2.5 bg-blue-500 text-white rounded-xl font-medium text-sm disabled:opacity-40 active:bg-blue-600"
+                          className="flex-1 py-2.5 bg-blue-500 text-white rounded-xl font-medium text-sm disabled:opacity-30 active:bg-blue-600"
                         >
                           保存
                         </button>
@@ -563,14 +563,14 @@ export default function GroupPage() {
                 return (
                   <div
                     key={expense.id}
-                    className="bg-white rounded-xl shadow-sm p-4 flex items-center justify-between cursor-pointer active:bg-gray-50"
+                    className="bg-zinc-900 rounded-xl border border-zinc-800 p-4 flex items-center justify-between cursor-pointer active:bg-zinc-800"
                     onClick={() => startEditing(expense)}
                   >
                     <div className="min-w-0 flex-1">
                       <div className="font-medium text-sm truncate">
                         {expense.description}
                       </div>
-                      <div className="text-xs text-gray-400">
+                      <div className="text-xs text-zinc-500">
                         {expense.expenseDate && `${expense.expenseDate} ・ `}
                         {payer?.name || "不明"} が支払い ・{" "}
                         {PAYMENT_METHODS.find((m) => m.value === expense.paymentMethod)?.label || "現金"} ・{" "}
@@ -588,7 +588,7 @@ export default function GroupPage() {
                             removeExpense(expense.id);
                           }
                         }}
-                        className="px-2 py-1 text-xs text-red-400 border border-red-200 rounded-lg hover:bg-red-50"
+                        className="px-2 py-1 text-xs text-rose-400 border border-rose-500/30 rounded-lg hover:bg-rose-500/10"
                       >
                         削除
                       </button>
@@ -604,7 +604,7 @@ export default function GroupPage() {
       {group.expenses.length > 0 && group.members.length >= 2 && (
         <Link
           href={`/group/${group.id}/settlements`}
-          className="block w-full text-center py-3 bg-green-500 text-white rounded-xl font-medium active:bg-green-600 mb-3"
+          className="block w-full text-center py-3 bg-emerald-500 text-white rounded-xl font-medium active:bg-emerald-600 mb-3"
         >
           精算結果を見る
         </Link>
@@ -618,7 +618,7 @@ export default function GroupPage() {
               resetGroupExpenses();
             }
           }}
-          className="block w-full text-center py-3 border border-orange-300 text-orange-500 rounded-xl font-medium text-sm active:bg-orange-50"
+          className="block w-full text-center py-3 border border-orange-500/30 text-orange-400 rounded-xl font-medium text-sm active:bg-orange-500/10"
         >
           精算をリセット（メンバーを残す）
         </button>
