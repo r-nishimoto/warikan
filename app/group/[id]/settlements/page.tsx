@@ -91,11 +91,11 @@ export default function SettlementsPage() {
     <div className="p-6">
       <div className="flex items-center mb-6">
         <Link href={`/group/${group.id}`} className="text-blue-400 text-sm">
-          ← 戻る
+          ← 精算入力画面に戻る
         </Link>
       </div>
 
-      <h1 className="text-xl font-bold mb-2">精算結果</h1>
+      <h1 className="text-xl font-bold mb-2">精算結果画面</h1>
       <p className="text-zinc-500 text-sm mb-6">{group.name}</p>
 
       {/* 端数処理の選択 */}
@@ -210,7 +210,7 @@ export default function SettlementsPage() {
         href={`/group/${group.id}`}
         className="block w-full text-center py-3 mt-6 border border-zinc-800 text-zinc-400 rounded-xl font-medium text-sm active:bg-zinc-800"
       >
-        グループ詳細に戻る
+        精算入力画面に戻る
       </Link>
 
       <div className="mt-6 text-center text-xs text-zinc-600">

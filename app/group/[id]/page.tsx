@@ -195,7 +195,7 @@ export default function GroupPage() {
       {/* ヘッダー */}
       <div className="flex items-center justify-between mb-6">
         <Link href="/" className="text-blue-400 text-sm">
-          ← 戻る
+          ← グループ作成画面に戻る
         </Link>
         <button
           onClick={handleShare}
@@ -606,7 +606,7 @@ export default function GroupPage() {
           href={`/group/${group.id}/settlements`}
           className="block w-full text-center py-3 bg-emerald-500 text-white rounded-xl font-medium active:bg-emerald-600 mb-3"
         >
-          精算結果を見る
+          精算結果画面を見る
         </Link>
       )}
 
