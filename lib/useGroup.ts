@@ -31,6 +31,10 @@ export function removeLocalGroupId(id: string) {
   localStorage.setItem(GROUP_IDS_KEY, JSON.stringify(ids));
 }
 
+export function reorderLocalGroupIds(ids: string[]) {
+  localStorage.setItem(GROUP_IDS_KEY, JSON.stringify(ids));
+}
+
 // DB行 → アプリ型の変換
 function assembleGroup(
   groupRow: { id: string; name: string; currency: string; created_at: number; updated_at: number },

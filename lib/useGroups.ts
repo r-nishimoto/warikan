@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "./supabase";
 import { Group } from "./types";
 import { nanoid } from "nanoid";
-import { getLocalGroupIds, addLocalGroupId, removeLocalGroupId } from "./useGroup";
+import { getLocalGroupIds, addLocalGroupId, removeLocalGroupId, reorderLocalGroupIds } from "./useGroup";
 
 // ホーム画面用: ローカルレジストリに登録されたグループ一覧を取得
 export function useGroups() {
@@ -63,6 +63,14 @@ export function useGroups() {
       updatedAt: g.updated_at,
     }));
 
+    // localStorageの配列順で並び替え
+    const idOrder = getLocalGroupIds();
+    assembled.sort((a, b) => {
+      const ai = idOrder.indexOf(a.id);
+      const bi = idOrder.indexOf(b.id);
+      return ai - bi;
+    });
+
     setGroups(assembled);
     setLoading(false);
   }, []);
@@ -107,5 +115,13 @@ export function useGroups() {
     setGroups((prev) => prev.filter((g) => g.id !== groupId));
   }, []);
 
-  return { groups, loading, addGroup, deleteGroup };
+  const reorderGroups = useCallback((orderedIds: string[]) => {
+    reorderLocalGroupIds(orderedIds);
+    setGroups((prev) => {
+      const map = new Map(prev.map((g) => [g.id, g]));
+      return orderedIds.map((id) => map.get(id)!).filter(Boolean);
+    });
+  }, []);
+
+  return { groups, loading, addGroup, deleteGroup, reorderGroups };
 }
