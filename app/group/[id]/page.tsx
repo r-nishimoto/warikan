@@ -31,6 +31,7 @@ export default function GroupPage() {
   const [memberName, setMemberName] = useState("");
   const [memberComposing, setMemberComposing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [urlCopied, setUrlCopied] = useState(false);
 
   // 支出フォーム
   const [description, setDescription] = useState("");
@@ -104,25 +105,35 @@ export default function GroupPage() {
     setMemberName("");
   }, [memberName, group, addMember]);
 
+  const groupUrl = group ? `${typeof window !== "undefined" ? window.location.origin : ""}/group/${group?.id}` : "";
+
+  const handleCopyUrl = useCallback(async () => {
+    if (!groupUrl) return;
+    try {
+      await navigator.clipboard.writeText(groupUrl);
+      setUrlCopied(true);
+      setTimeout(() => setUrlCopied(false), 2000);
+    } catch {
+      // fallback
+    }
+  }, [groupUrl]);
+
   const handleShare = useCallback(async () => {
     if (!group) return;
-    const url = `${window.location.origin}/group/${group.id}`;
     try {
       if (typeof navigator !== "undefined" && navigator.share) {
         await navigator.share({
           title: `Waroya: ${group.name}`,
           text: `「${group.name}」の割り勘グループに参加しよう`,
-          url,
+          url: groupUrl,
         });
-      } else if (typeof navigator !== "undefined" && navigator.clipboard) {
-        await navigator.clipboard.writeText(url);
+      } else {
+        await handleCopyUrl();
       }
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
     } catch {
       // user cancelled share dialog
     }
-  }, [group]);
+  }, [group, groupUrl, handleCopyUrl]);
 
   const handleAddExpense = useCallback(async () => {
     if (!group) return;
@@ -193,15 +204,31 @@ export default function GroupPage() {
   return (
     <div className="p-6 pb-8">
       {/* ヘッダー */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6">
         <Link href="/" className="text-blue-400 text-sm">
           ← グループ作成画面に戻る
         </Link>
+      </div>
+
+      {/* 招待URL */}
+      <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5 mb-6">
+        <p className="text-sm text-zinc-400 mb-3">このURLをメンバーに共有してください</p>
+        <div className="flex items-center gap-2">
+          <div className="flex-1 min-w-0 px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-xl text-sm text-zinc-300 truncate">
+            {groupUrl}
+          </div>
+          <button
+            onClick={handleCopyUrl}
+            className="flex-shrink-0 px-4 py-2.5 bg-blue-500 text-white rounded-xl text-sm font-medium active:bg-blue-600"
+          >
+            {urlCopied ? "✓ コピー!" : "コピー"}
+          </button>
+        </div>
         <button
           onClick={handleShare}
-          className="text-sm px-4 py-2 bg-blue-500/10 text-blue-400 rounded-lg active:bg-blue-500/20"
+          className="mt-3 text-xs text-zinc-500 underline underline-offset-2 active:text-zinc-400"
         >
-          {copied ? "コピーしました!" : "グループに招待する"}
+          その他の方法で招待する
         </button>
       </div>
 
