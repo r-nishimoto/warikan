@@ -206,12 +206,20 @@ export default function SettlementsPage() {
         </>
       )}
 
-      <Link
-        href={`/group/${group.id}`}
-        className="block w-full text-center py-3 mt-6 border border-zinc-800 text-zinc-400 rounded-xl font-medium text-sm active:bg-zinc-800"
-      >
-        精算入力画面に戻る
-      </Link>
+      <div className="space-y-3 mt-6">
+        <Link
+          href={`/group/${group.id}`}
+          className="block w-full text-center py-3 border border-zinc-800 text-zinc-400 rounded-xl font-medium text-sm active:bg-zinc-800"
+        >
+          精算入力画面に戻る
+        </Link>
+        <Link
+          href="/"
+          className="block w-full text-center py-3 border border-zinc-800 text-zinc-500 rounded-xl font-medium text-sm active:bg-zinc-800"
+        >
+          TOPに戻る
+        </Link>
+      </div>
 
       <div className="mt-6 text-center text-xs text-zinc-600">
         支払い回数を最小化して計算しています
