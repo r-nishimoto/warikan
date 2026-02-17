@@ -95,7 +95,7 @@ export default function SettlementsPage() {
         </Link>
       </div>
 
-      <h1 className="text-xl font-bold mb-2">精算結果画面</h1>
+      <h1 className="text-xl font-bold mb-2">精算結果</h1>
       <p className="text-zinc-500 text-sm mb-6">{group.name}</p>
 
       {/* 端数処理の選択 */}
