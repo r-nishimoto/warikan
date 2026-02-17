@@ -39,7 +39,7 @@ export function reorderLocalGroupIds(ids: string[]) {
 function assembleGroup(
   groupRow: { id: string; name: string; currency: string; created_at: number; updated_at: number },
   memberRows: { id: string; name: string; preferred_receiving_method: string | null }[],
-  expenseRows: { id: string; description: string; amount: number; paid_by: string; payment_method: string; split_among: string[]; expense_date: string | null; date: number }[],
+  expenseRows: { id: string; description: string; amount: number; paid_by: string; payment_method: string; split_among: string[]; expense_date: string | null; date: number; adjustments: any | null }[],
   settlementRows: { settlement_key: string }[]
 ): Group {
   return {
@@ -60,6 +60,7 @@ function assembleGroup(
       splitAmong: e.split_among || [],
       expenseDate: e.expense_date || undefined,
       date: e.date,
+      adjustments: e.adjustments || undefined,
     })),
     completedSettlements: settlementRows.map((s) => s.settlement_key),
     createdAt: groupRow.created_at,
@@ -159,7 +160,17 @@ export function useGroup(groupId: string) {
           if (newSplitAmong.length === 0) {
             await supabase.from("expenses").delete().eq("id", expense.id);
           } else {
-            await supabase.from("expenses").update({ split_among: newSplitAmong }).eq("id", expense.id);
+            // adjustments からもメンバーを除去
+            const newAdjustments = expense.adjustments
+              ?.map((adj) => ({
+                ...adj,
+                memberIds: adj.memberIds.filter((id) => id !== memberId),
+              }))
+              .filter((adj) => adj.memberIds.length > 0);
+            await supabase.from("expenses").update({
+              split_among: newSplitAmong,
+              adjustments: newAdjustments?.length ? newAdjustments : null,
+            }).eq("id", expense.id);
           }
         }
       }
@@ -180,6 +191,7 @@ export function useGroup(groupId: string) {
       split_among: expense.splitAmong,
       expense_date: expense.expenseDate || null,
       date: expense.date,
+      adjustments: expense.adjustments?.length ? expense.adjustments : null,
     });
     await touchGroup();
   }, [groupId, touchGroup]);
@@ -193,6 +205,7 @@ export function useGroup(groupId: string) {
       split_among: expense.splitAmong,
       expense_date: expense.expenseDate || null,
       date: expense.date,
+      adjustments: expense.adjustments?.length ? expense.adjustments : null,
     }).eq("id", expenseId);
     await touchGroup();
   }, [touchGroup]);

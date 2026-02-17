@@ -15,6 +15,7 @@ interface MinimalGroup {
     ed?: string;
     s: string[];
     t: number;
+    aj?: Array<{ m: string[]; a: number; mm?: string }>;
   }>;
   t: number;
 }
@@ -34,6 +35,11 @@ export function encodeGroupForSharing(group: Group): string {
       ed: e.expenseDate,
       s: e.splitAmong,
       t: e.date,
+      aj: e.adjustments?.length ? e.adjustments.map((adj) => ({
+        m: adj.memberIds,
+        a: adj.amount,
+        mm: adj.memo,
+      })) : undefined,
     })),
     t: group.createdAt,
   };
@@ -59,6 +65,11 @@ export function decodeGroupFromSharing(encoded: string): Group | null {
         expenseDate: e.ed,
         splitAmong: e.s,
         date: e.t,
+        adjustments: e.aj?.map((adj) => ({
+          memberIds: adj.m,
+          amount: adj.a,
+          memo: adj.mm,
+        })) || undefined,
       })),
       completedSettlements: [],
       createdAt: minimal.t,

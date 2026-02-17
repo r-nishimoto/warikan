@@ -25,6 +25,12 @@ export const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
   { value: "other", label: "その他" },
 ];
 
+export interface Adjustment {
+  memberIds: string[];  // 対象メンバーID
+  amount: number;       // 符号付き金額（負=割引、正=追加）
+  memo?: string;        // 例: "ノンアル"
+}
+
 export interface Expense {
   id: string;
   description: string;
@@ -34,6 +40,7 @@ export interface Expense {
   splitAmong: string[];
   expenseDate?: string; // YYYY-MM-DD形式（任意）
   date: number;
+  adjustments?: Adjustment[];
 }
 
 export interface Settlement {

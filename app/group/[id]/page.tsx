@@ -5,7 +5,8 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useGroup } from "@/lib/useGroup";
 import { formatCurrency, formatNumberWithCommas, removeCommas } from "@/lib/utils";
-import { Expense, PaymentMethod, PAYMENT_METHODS, ReceivingMethod, RECEIVING_METHODS } from "@/lib/types";
+import { Adjustment, Expense, PaymentMethod, PAYMENT_METHODS, ReceivingMethod, RECEIVING_METHODS } from "@/lib/types";
+import { calculateMemberShares } from "@/lib/settlement";
 
 export default function GroupPage() {
   const { id } = useParams<{ id: string }>();
@@ -43,6 +44,11 @@ export default function GroupPage() {
   const [descComposing, setDescComposing] = useState(false);
   const [memberError, setMemberError] = useState("");
 
+  // 調整（Add form）
+  type AdjustmentInput = { memberIds: string[]; amount: string; memo: string };
+  const [adjustments, setAdjustments] = useState<AdjustmentInput[]>([]);
+  const [showAdjustments, setShowAdjustments] = useState(false);
+
   // 編集モード
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDesc, setEditDesc] = useState("");
@@ -53,6 +59,10 @@ export default function GroupPage() {
   const [editExpenseDate, setEditExpenseDate] = useState("");
   const [editDescComposing, setEditDescComposing] = useState(false);
 
+  // 調整（Edit form）
+  const [editAdjustments, setEditAdjustments] = useState<AdjustmentInput[]>([]);
+  const [showEditAdjustments, setShowEditAdjustments] = useState(false);
+
   const startEditing = (expense: Expense) => {
     setEditingId(expense.id);
     setEditDesc(expense.description);
@@ -61,10 +71,30 @@ export default function GroupPage() {
     setEditPaymentMethod(expense.paymentMethod);
     setEditSplitAmong([...expense.splitAmong]);
     setEditExpenseDate(expense.expenseDate || "");
+    setEditAdjustments(
+      expense.adjustments?.map((adj) => ({
+        memberIds: [...adj.memberIds],
+        amount: String(Math.abs(adj.amount)),
+        memo: adj.memo || "",
+      })) || []
+    );
+    setShowEditAdjustments((expense.adjustments?.length || 0) > 0);
   };
 
   const cancelEditing = () => {
     setEditingId(null);
+  };
+
+  // 調整入力 → Adjustment[] に変換するヘルパー
+  const parseAdjustments = (inputs: AdjustmentInput[]): Adjustment[] | undefined => {
+    const parsed = inputs
+      .filter((adj) => adj.memberIds.length > 0 && parseInt(adj.amount, 10) > 0)
+      .map((adj) => ({
+        memberIds: adj.memberIds,
+        amount: -Math.abs(parseInt(adj.amount, 10)),
+        memo: adj.memo.trim() || undefined,
+      }));
+    return parsed.length > 0 ? parsed : undefined;
   };
 
   const handleSaveEdit = useCallback(async () => {
@@ -80,16 +110,27 @@ export default function GroupPage() {
       splitAmong: editSplitAmong,
       expenseDate: editExpenseDate || undefined,
       date: Date.now(),
+      adjustments: parseAdjustments(editAdjustments),
     });
     setEditingId(null);
-  }, [group, editingId, editDesc, editAmount, editPaidBy, editPaymentMethod, editSplitAmong, editExpenseDate, updateExpense]);
+  }, [group, editingId, editDesc, editAmount, editPaidBy, editPaymentMethod, editSplitAmong, editExpenseDate, editAdjustments, updateExpense]);
 
   const toggleEditSplitMember = (memberId: string) => {
-    setEditSplitAmong((prev) =>
-      prev.includes(memberId)
+    setEditSplitAmong((prev) => {
+      const next = prev.includes(memberId)
         ? prev.filter((id) => id !== memberId)
-        : [...prev, memberId]
-    );
+        : [...prev, memberId];
+      // splitAmongから外れたメンバーをadjustmentsからも除去
+      if (!next.includes(memberId)) {
+        setEditAdjustments((prevAdj) =>
+          prevAdj.map((adj) => ({
+            ...adj,
+            memberIds: adj.memberIds.filter((id) => next.includes(id)),
+          })).filter((adj) => adj.memberIds.length > 0)
+        );
+      }
+      return next;
+    });
   };
 
   const handleAddMember = useCallback(async () => {
@@ -148,6 +189,7 @@ export default function GroupPage() {
       splitAmong,
       expenseDate: expenseDate || undefined,
       date: Date.now(),
+      adjustments: parseAdjustments(adjustments),
     });
     setDescription("");
     setAmount("");
@@ -155,14 +197,25 @@ export default function GroupPage() {
     setPaymentMethod("cash");
     setExpenseDate("");
     setSplitAmong([]);
-  }, [group, description, amount, paidBy, paymentMethod, splitAmong, expenseDate, addExpense]);
+    setAdjustments([]);
+    setShowAdjustments(false);
+  }, [group, description, amount, paidBy, paymentMethod, splitAmong, expenseDate, adjustments, addExpense]);
 
   const toggleSplitMember = (memberId: string) => {
-    setSplitAmong((prev) =>
-      prev.includes(memberId)
+    setSplitAmong((prev) => {
+      const next = prev.includes(memberId)
         ? prev.filter((id) => id !== memberId)
-        : [...prev, memberId]
-    );
+        : [...prev, memberId];
+      if (!next.includes(memberId)) {
+        setAdjustments((prevAdj) =>
+          prevAdj.map((adj) => ({
+            ...adj,
+            memberIds: adj.memberIds.filter((id) => next.includes(id)),
+          })).filter((adj) => adj.memberIds.length > 0)
+        );
+      }
+      return next;
+    });
   };
 
   const selectAllMembers = () => {
@@ -448,6 +501,146 @@ export default function GroupPage() {
                 ))}
               </div>
             </div>
+
+            {/* 割引・調整（任意） */}
+            {splitAmong.length > 0 && (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setShowAdjustments(!showAdjustments)}
+                  className="flex items-center gap-1.5 text-xs text-zinc-500 active:text-zinc-400"
+                >
+                  <span className={`transition-transform duration-150 ${showAdjustments ? "rotate-90" : ""}`}>▶</span>
+                  割引・調整（任意）
+                  {adjustments.length > 0 && (
+                    <span className="ml-1 px-1.5 py-0.5 bg-orange-500/20 text-orange-400 rounded-full text-[10px]">
+                      {adjustments.length}
+                    </span>
+                  )}
+                </button>
+
+                {showAdjustments && (
+                  <div className="mt-3 space-y-3">
+                    {adjustments.map((adj, index) => (
+                      <div key={index} className="bg-zinc-800/50 rounded-xl p-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-zinc-500">調整 {index + 1}</span>
+                          <button
+                            onClick={() => setAdjustments((prev) => prev.filter((_, i) => i !== index))}
+                            className="text-xs text-rose-400 active:text-rose-300"
+                          >
+                            削除
+                          </button>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-zinc-500 mb-1">対象メンバー</label>
+                          <div className="flex flex-wrap gap-1.5">
+                            {group.members
+                              .filter((m) => splitAmong.includes(m.id))
+                              .map((member) => (
+                                <button
+                                  key={member.id}
+                                  onClick={() => {
+                                    setAdjustments((prev) =>
+                                      prev.map((a, i) =>
+                                        i === index
+                                          ? { ...a, memberIds: a.memberIds.includes(member.id) ? a.memberIds.filter((id) => id !== member.id) : [...a.memberIds, member.id] }
+                                          : a
+                                      )
+                                    );
+                                  }}
+                                  className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
+                                    adj.memberIds.includes(member.id)
+                                      ? "bg-orange-500 text-white border-orange-500"
+                                      : "bg-zinc-800 border-zinc-700 text-zinc-400 active:bg-zinc-700"
+                                  }`}
+                                >
+                                  {member.name}
+                                </button>
+                              ))}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-zinc-500 mb-1">割引額（1人あたり）</label>
+                          <div className="flex items-center gap-2">
+                            <span className="text-zinc-500 text-sm">-</span>
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              value={formatNumberWithCommas(adj.amount)}
+                              onChange={(e) => {
+                                const v = removeCommas(e.target.value).replace(/[^0-9]/g, "");
+                                setAdjustments((prev) => prev.map((a, i) => (i === index ? { ...a, amount: v } : a)));
+                              }}
+                              placeholder="1000"
+                              className="flex-1 px-3 py-2 border border-zinc-700 bg-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-zinc-600"
+                            />
+                            <span className="text-zinc-500 text-sm">円</span>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-zinc-500 mb-1">メモ（任意）</label>
+                          <input
+                            type="text"
+                            value={adj.memo}
+                            onChange={(e) => setAdjustments((prev) => prev.map((a, i) => (i === index ? { ...a, memo: e.target.value } : a)))}
+                            placeholder="例: ノンアル"
+                            className="w-full px-3 py-2 border border-zinc-700 bg-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-zinc-600"
+                          />
+                        </div>
+                      </div>
+                    ))}
+
+                    <button
+                      onClick={() => setAdjustments((prev) => [...prev, { memberIds: [], amount: "", memo: "" }])}
+                      className="w-full py-2 border border-dashed border-zinc-700 text-zinc-500 rounded-xl text-sm active:bg-zinc-800"
+                    >
+                      + 調整を追加
+                    </button>
+
+                    {/* プレビュー */}
+                    {adjustments.some((a) => a.memberIds.length > 0 && parseInt(a.amount, 10) > 0) &&
+                      parseInt(amount, 10) > 0 &&
+                      splitAmong.length > 0 && (
+                        <div className="bg-zinc-800/30 rounded-xl p-3">
+                          <p className="text-xs text-zinc-500 mb-2">調整後の1人あたり金額（目安）</p>
+                          <div className="space-y-1">
+                            {(() => {
+                              const tempExpense: Expense = {
+                                id: "preview",
+                                description: "",
+                                amount: parseInt(amount, 10),
+                                paidBy: "",
+                                paymentMethod: "cash",
+                                splitAmong,
+                                date: 0,
+                                adjustments: parseAdjustments(adjustments),
+                              };
+                              const shares = calculateMemberShares(tempExpense);
+                              return splitAmong.map((memberId) => {
+                                const member = group.members.find((m) => m.id === memberId);
+                                const share = shares.get(memberId) || 0;
+                                const baseShare = Math.round(parseInt(amount, 10) / splitAmong.length);
+                                const diff = share - baseShare;
+                                return (
+                                  <div key={memberId} className="flex justify-between text-xs">
+                                    <span className="text-zinc-400">{member?.name}</span>
+                                    <span className={diff !== 0 ? "text-orange-400" : "text-zinc-300"}>
+                                      {formatCurrency(share)}
+                                      {diff !== 0 && ` (${diff > 0 ? "+" : ""}${formatCurrency(diff)})`}
+                                    </span>
+                                  </div>
+                                );
+                              });
+                            })()}
+                          </div>
+                        </div>
+                      )}
+                  </div>
+                )}
+              </div>
+            )}
+
             <button
               onClick={handleAddExpense}
               disabled={!isExpenseValid}
@@ -568,6 +761,146 @@ export default function GroupPage() {
                           ))}
                         </div>
                       </div>
+
+                      {/* 割引・調整（編集フォーム） */}
+                      {editSplitAmong.length > 0 && (
+                        <div>
+                          <button
+                            type="button"
+                            onClick={() => setShowEditAdjustments(!showEditAdjustments)}
+                            className="flex items-center gap-1.5 text-xs text-zinc-500 active:text-zinc-400"
+                          >
+                            <span className={`transition-transform duration-150 ${showEditAdjustments ? "rotate-90" : ""}`}>▶</span>
+                            割引・調整（任意）
+                            {editAdjustments.length > 0 && (
+                              <span className="ml-1 px-1.5 py-0.5 bg-orange-500/20 text-orange-400 rounded-full text-[10px]">
+                                {editAdjustments.length}
+                              </span>
+                            )}
+                          </button>
+
+                          {showEditAdjustments && (
+                            <div className="mt-3 space-y-3">
+                              {editAdjustments.map((adj, index) => (
+                                <div key={index} className="bg-zinc-800/50 rounded-xl p-3 space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs text-zinc-500">調整 {index + 1}</span>
+                                    <button
+                                      onClick={() => setEditAdjustments((prev) => prev.filter((_, i) => i !== index))}
+                                      className="text-xs text-rose-400 active:text-rose-300"
+                                    >
+                                      削除
+                                    </button>
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs text-zinc-500 mb-1">対象メンバー</label>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {group.members
+                                        .filter((m) => editSplitAmong.includes(m.id))
+                                        .map((member) => (
+                                          <button
+                                            key={member.id}
+                                            onClick={() => {
+                                              setEditAdjustments((prev) =>
+                                                prev.map((a, i) =>
+                                                  i === index
+                                                    ? { ...a, memberIds: a.memberIds.includes(member.id) ? a.memberIds.filter((id) => id !== member.id) : [...a.memberIds, member.id] }
+                                                    : a
+                                                )
+                                              );
+                                            }}
+                                            className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
+                                              adj.memberIds.includes(member.id)
+                                                ? "bg-orange-500 text-white border-orange-500"
+                                                : "bg-zinc-800 border-zinc-700 text-zinc-400 active:bg-zinc-700"
+                                            }`}
+                                          >
+                                            {member.name}
+                                          </button>
+                                        ))}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs text-zinc-500 mb-1">割引額（1人あたり）</label>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-zinc-500 text-sm">-</span>
+                                      <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        value={formatNumberWithCommas(adj.amount)}
+                                        onChange={(e) => {
+                                          const v = removeCommas(e.target.value).replace(/[^0-9]/g, "");
+                                          setEditAdjustments((prev) => prev.map((a, i) => (i === index ? { ...a, amount: v } : a)));
+                                        }}
+                                        placeholder="1000"
+                                        className="flex-1 px-3 py-2 border border-zinc-700 bg-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-zinc-600"
+                                      />
+                                      <span className="text-zinc-500 text-sm">円</span>
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs text-zinc-500 mb-1">メモ（任意）</label>
+                                    <input
+                                      type="text"
+                                      value={adj.memo}
+                                      onChange={(e) => setEditAdjustments((prev) => prev.map((a, i) => (i === index ? { ...a, memo: e.target.value } : a)))}
+                                      placeholder="例: ノンアル"
+                                      className="w-full px-3 py-2 border border-zinc-700 bg-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-zinc-600"
+                                    />
+                                  </div>
+                                </div>
+                              ))}
+
+                              <button
+                                onClick={() => setEditAdjustments((prev) => [...prev, { memberIds: [], amount: "", memo: "" }])}
+                                className="w-full py-2 border border-dashed border-zinc-700 text-zinc-500 rounded-xl text-sm active:bg-zinc-800"
+                              >
+                                + 調整を追加
+                              </button>
+
+                              {/* プレビュー */}
+                              {editAdjustments.some((a) => a.memberIds.length > 0 && parseInt(a.amount, 10) > 0) &&
+                                parseInt(editAmount, 10) > 0 &&
+                                editSplitAmong.length > 0 && (
+                                  <div className="bg-zinc-800/30 rounded-xl p-3">
+                                    <p className="text-xs text-zinc-500 mb-2">調整後の1人あたり金額（目安）</p>
+                                    <div className="space-y-1">
+                                      {(() => {
+                                        const tempExpense: Expense = {
+                                          id: "preview",
+                                          description: "",
+                                          amount: parseInt(editAmount, 10),
+                                          paidBy: "",
+                                          paymentMethod: "cash",
+                                          splitAmong: editSplitAmong,
+                                          date: 0,
+                                          adjustments: parseAdjustments(editAdjustments),
+                                        };
+                                        const shares = calculateMemberShares(tempExpense);
+                                        return editSplitAmong.map((memberId) => {
+                                          const member = group.members.find((m) => m.id === memberId);
+                                          const share = shares.get(memberId) || 0;
+                                          const baseShare = Math.round(parseInt(editAmount, 10) / editSplitAmong.length);
+                                          const diff = share - baseShare;
+                                          return (
+                                            <div key={memberId} className="flex justify-between text-xs">
+                                              <span className="text-zinc-400">{member?.name}</span>
+                                              <span className={diff !== 0 ? "text-orange-400" : "text-zinc-300"}>
+                                                {formatCurrency(share)}
+                                                {diff !== 0 && ` (${diff > 0 ? "+" : ""}${formatCurrency(diff)})`}
+                                              </span>
+                                            </div>
+                                          );
+                                        });
+                                      })()}
+                                    </div>
+                                  </div>
+                                )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       <div className="flex gap-2">
                         <button
                           onClick={cancelEditing}
@@ -602,6 +935,9 @@ export default function GroupPage() {
                         {payer?.name || "不明"} が支払い ・{" "}
                         {PAYMENT_METHODS.find((m) => m.value === expense.paymentMethod)?.label || "現金"} ・{" "}
                         {expense.splitAmong.length}人で分割
+                        {expense.adjustments && expense.adjustments.length > 0 && (
+                          <span className="text-orange-400"> ・ 調整あり</span>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
