@@ -13,14 +13,14 @@ export default function Home() {
   const { groups, loading, addGroup, deleteGroup, reorderGroups } = useGroups();
 
   // ドラッグ&ドロップ状態
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const [currentIndex, setCurrentIndex] = useState<number | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const dragIdRef = useRef<string | null>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStartY = useRef(0);
   const touchStartX = useRef(0);
   const listRef = useRef<HTMLDivElement>(null);
-  const itemRects = useRef<DOMRect[]>([]);
-  const scrollLocked = useRef(false);
+  // 最後にswapした時刻（連続swap防止）
+  const lastSwapTime = useRef(0);
 
   const handleCreate = async () => {
     if (!name.trim()) return;
@@ -29,46 +29,71 @@ export default function Home() {
     router.push(`/group/${group.id}`);
   };
 
-  // アイテムの位置を記録
-  const captureRects = useCallback(() => {
-    const list = listRef.current;
-    if (!list) return;
-    const children = Array.from(list.children) as HTMLElement[];
-    itemRects.current = children.map((child) => child.getBoundingClientRect());
+  // ドラッグ開始
+  const handleDragStart = useCallback((groupId: string) => {
+    dragIdRef.current = groupId;
+    setDragging(true);
+    if (navigator.vibrate) navigator.vibrate(30);
   }, []);
 
-  // ドラッグ開始
-  const handleDragStart = useCallback((index: number) => {
-    captureRects();
-    setDragIndex(index);
-    setCurrentIndex(index);
-    if (navigator.vibrate) navigator.vibrate(30);
-    scrollLocked.current = true;
-  }, [captureRects]);
-
   // タッチ開始
-  const handleTouchStart = useCallback((e: React.TouchEvent, index: number) => {
+  const handleTouchStart = useCallback((e: React.TouchEvent, groupId: string) => {
     touchStartY.current = e.touches[0].clientY;
     touchStartX.current = e.touches[0].clientX;
     longPressTimer.current = setTimeout(() => {
-      handleDragStart(index);
+      handleDragStart(groupId);
     }, 300);
   }, [handleDragStart]);
 
-  // インデックス計算（タッチ位置から）
-  const calcTargetIndex = useCallback((clientY: number) => {
-    const rects = itemRects.current;
-    if (rects.length === 0) return 0;
-    for (let i = 0; i < rects.length; i++) {
-      const midY = rects[i].top + rects[i].height / 2;
-      if (clientY < midY) return i;
+  // 隣接アイテムとswap
+  const trySwap = useCallback((clientY: number) => {
+    const list = listRef.current;
+    const dragId = dragIdRef.current;
+    if (!list || !dragId) return;
+
+    // 連続swap防止（150ms間隔）
+    const now = Date.now();
+    if (now - lastSwapTime.current < 150) return;
+
+    const children = Array.from(list.children) as HTMLElement[];
+    const dragIdx = groups.findIndex((g) => g.id === dragId);
+    if (dragIdx === -1) return;
+
+    const dragRect = children[dragIdx]?.getBoundingClientRect();
+    if (!dragRect) return;
+
+    const dragMidY = dragRect.top + dragRect.height / 2;
+
+    // 上のアイテムとswap: タッチが上のアイテムの中央より上にある
+    if (dragIdx > 0) {
+      const aboveRect = children[dragIdx - 1]?.getBoundingClientRect();
+      if (aboveRect && clientY < aboveRect.top + aboveRect.height / 2) {
+        const newIds = groups.map((g) => g.id);
+        [newIds[dragIdx - 1], newIds[dragIdx]] = [newIds[dragIdx], newIds[dragIdx - 1]];
+        reorderGroups(newIds);
+        lastSwapTime.current = now;
+        if (navigator.vibrate) navigator.vibrate(15);
+        return;
+      }
     }
-    return rects.length - 1;
-  }, []);
+
+    // 下のアイテムとswap: タッチが下のアイテムの中央より下にある
+    if (dragIdx < groups.length - 1) {
+      const belowRect = children[dragIdx + 1]?.getBoundingClientRect();
+      if (belowRect && clientY > belowRect.top + belowRect.height / 2) {
+        const newIds = groups.map((g) => g.id);
+        [newIds[dragIdx], newIds[dragIdx + 1]] = [newIds[dragIdx + 1], newIds[dragIdx]];
+        reorderGroups(newIds);
+        lastSwapTime.current = now;
+        if (navigator.vibrate) navigator.vibrate(15);
+        return;
+      }
+    }
+  }, [groups, reorderGroups]);
 
   // タッチ移動
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (dragIndex === null) {
+    if (!dragging) {
       // 長押し前にスクロールしたらキャンセル
       if (longPressTimer.current) {
         const dy = Math.abs(e.touches[0].clientY - touchStartY.current);
@@ -81,9 +106,8 @@ export default function Home() {
       return;
     }
     e.preventDefault();
-    const target = calcTargetIndex(e.touches[0].clientY);
-    setCurrentIndex(target);
-  }, [dragIndex, calcTargetIndex]);
+    trySwap(e.touches[0].clientY);
+  }, [dragging, trySwap]);
 
   // ドロップ
   const handleDrop = useCallback(() => {
@@ -91,16 +115,9 @@ export default function Home() {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
     }
-    if (dragIndex !== null && currentIndex !== null && dragIndex !== currentIndex) {
-      const newOrder = [...groups];
-      const [moved] = newOrder.splice(dragIndex, 1);
-      newOrder.splice(currentIndex, 0, moved);
-      reorderGroups(newOrder.map((g) => g.id));
-    }
-    setDragIndex(null);
-    setCurrentIndex(null);
-    scrollLocked.current = false;
-  }, [dragIndex, currentIndex, groups, reorderGroups]);
+    dragIdRef.current = null;
+    setDragging(false);
+  }, []);
 
   // タッチキャンセル
   const handleTouchCancel = useCallback(() => {
@@ -108,21 +125,18 @@ export default function Home() {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
     }
-    setDragIndex(null);
-    setCurrentIndex(null);
-    scrollLocked.current = false;
+    dragIdRef.current = null;
+    setDragging(false);
   }, []);
 
   // ドラッグ中のスクロール完全防止
   useEffect(() => {
-    if (dragIndex === null) return;
+    if (!dragging) return;
 
-    // 現在のスクロール位置を保存
     const scrollY = window.scrollY;
     const body = document.body;
     const html = document.documentElement;
 
-    // body固定でスクロールを完全に無効化
     body.style.position = "fixed";
     body.style.top = `-${scrollY}px`;
     body.style.left = "0";
@@ -130,12 +144,10 @@ export default function Home() {
     body.style.overflow = "hidden";
     html.style.overflow = "hidden";
 
-    // touchmoveも念のためpreventDefault
     const prevent = (e: TouchEvent) => e.preventDefault();
     document.addEventListener("touchmove", prevent, { passive: false });
 
     return () => {
-      // 元に戻す
       body.style.position = "";
       body.style.top = "";
       body.style.left = "";
@@ -145,33 +157,7 @@ export default function Home() {
       window.scrollTo(0, scrollY);
       document.removeEventListener("touchmove", prevent);
     };
-  }, [dragIndex]);
-
-  // 各アイテムのtranslateYを計算
-  const getItemStyle = (index: number) => {
-    if (dragIndex === null || currentIndex === null) return {};
-    if (index === dragIndex) {
-      // ドラッグ中のアイテムは表示上の位置を移動
-      return {};
-    }
-    const rects = itemRects.current;
-    if (rects.length === 0) return {};
-    const itemH = (rects[0]?.height ?? 72) + 12; // height + gap
-
-    // ドラッグ元から移動先へアイテムがスライドする
-    if (dragIndex < currentIndex) {
-      // 下にドラッグ: dragIndex+1 ~ currentIndex のアイテムが上にスライド
-      if (index > dragIndex && index <= currentIndex) {
-        return { transform: `translateY(-${itemH}px)`, transition: "transform 200ms ease" };
-      }
-    } else if (dragIndex > currentIndex) {
-      // 上にドラッグ: currentIndex ~ dragIndex-1 のアイテムが下にスライド
-      if (index >= currentIndex && index < dragIndex) {
-        return { transform: `translateY(${itemH}px)`, transition: "transform 200ms ease" };
-      }
-    }
-    return { transition: "transform 200ms ease" };
-  };
+  }, [dragging]);
 
   return (
     <div className="p-6">
@@ -213,19 +199,20 @@ export default function Home() {
         <div>
           <h2 className="text-lg font-semibold mb-3">グループ一覧</h2>
           <div ref={listRef} className="flex flex-col gap-3">
-            {groups.map((group, index) => {
-              const isDragging = dragIndex === index;
+            {groups.map((group) => {
+              const isDragging = dragging && dragIdRef.current === group.id;
 
               return (
                 <div
                   key={group.id}
-                  style={getItemStyle(index)}
-                  className={`bg-zinc-900 rounded-2xl border p-5 select-none ${
+                  className={`bg-zinc-900 rounded-2xl border p-5 select-none transition-all duration-150 ${
                     isDragging
-                      ? "border-blue-400 opacity-40 scale-[0.92] shadow-xl shadow-blue-500/30 z-10 relative"
+                      ? "border-blue-400 scale-[0.95] shadow-lg shadow-blue-500/20 opacity-80"
+                      : dragging
+                      ? "border-zinc-800"
                       : "border-zinc-800"
                   }`}
-                  onTouchStart={(e) => handleTouchStart(e, index)}
+                  onTouchStart={(e) => handleTouchStart(e, group.id)}
                   onTouchMove={handleTouchMove}
                   onTouchEnd={handleDrop}
                   onTouchCancel={handleTouchCancel}
@@ -236,7 +223,7 @@ export default function Home() {
                       className="flex items-center gap-3 text-zinc-600 cursor-grab active:cursor-grabbing pr-2 touch-none"
                       onMouseDown={(e) => {
                         e.preventDefault();
-                        handleDragStart(index);
+                        handleDragStart(group.id);
                       }}
                     >
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="flex-shrink-0">
@@ -252,7 +239,7 @@ export default function Home() {
                       href={`/group/${group.id}`}
                       className="flex-1 min-w-0"
                       onClick={(e) => {
-                        if (dragIndex !== null) e.preventDefault();
+                        if (dragging) e.preventDefault();
                       }}
                     >
                       <div className="text-lg font-bold truncate mb-1">{group.name}</div>
@@ -281,13 +268,10 @@ export default function Home() {
       ) : null}
 
       {/* マウスドラッグ用グローバルイベント */}
-      {dragIndex !== null && (
+      {dragging && (
         <div
           className="fixed inset-0 z-50 cursor-grabbing"
-          onMouseMove={(e) => {
-            const target = calcTargetIndex(e.clientY);
-            setCurrentIndex(target);
-          }}
+          onMouseMove={(e) => trySwap(e.clientY)}
           onMouseUp={handleDrop}
         />
       )}
