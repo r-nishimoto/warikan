@@ -23,8 +23,13 @@ export default function Home() {
   const lastSwapTime = useRef(0);
 
   const handleCreate = async () => {
-    if (!name.trim()) return;
-    const group = await addGroup(name.trim());
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    if (groups.some((g) => g.name === trimmed)) {
+      alert("同じ名前のグループがすでにあります");
+      return;
+    }
+    const group = await addGroup(trimmed);
     setName("");
     router.push(`/group/${group.id}`);
   };
