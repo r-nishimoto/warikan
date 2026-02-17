@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useGroups } from "@/lib/useGroups";
 import { formatCurrency } from "@/lib/utils";
@@ -14,10 +14,13 @@ export default function Home() {
 
   // ドラッグ&ドロップ状態
   const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const [overIndex, setOverIndex] = useState<number | null>(null);
+  const [currentIndex, setCurrentIndex] = useState<number | null>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const dragStartY = useRef(0);
+  const touchStartY = useRef(0);
+  const touchStartX = useRef(0);
   const listRef = useRef<HTMLDivElement>(null);
+  const itemRects = useRef<DOMRect[]>([]);
+  const scrollLocked = useRef(false);
 
   const handleCreate = async () => {
     if (!name.trim()) return;
@@ -26,29 +29,51 @@ export default function Home() {
     router.push(`/group/${group.id}`);
   };
 
-  // ドラッグ開始（長押し）
-  const handleDragStart = useCallback((index: number) => {
-    setDragIndex(index);
-    setOverIndex(index);
-    // ハプティクスフィードバック
-    if (navigator.vibrate) navigator.vibrate(30);
+  // アイテムの位置を記録
+  const captureRects = useCallback(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const children = Array.from(list.children) as HTMLElement[];
+    itemRects.current = children.map((child) => child.getBoundingClientRect());
   }, []);
+
+  // ドラッグ開始
+  const handleDragStart = useCallback((index: number) => {
+    captureRects();
+    setDragIndex(index);
+    setCurrentIndex(index);
+    if (navigator.vibrate) navigator.vibrate(30);
+    scrollLocked.current = true;
+  }, [captureRects]);
 
   // タッチ開始
   const handleTouchStart = useCallback((e: React.TouchEvent, index: number) => {
-    dragStartY.current = e.touches[0].clientY;
+    touchStartY.current = e.touches[0].clientY;
+    touchStartX.current = e.touches[0].clientX;
     longPressTimer.current = setTimeout(() => {
       handleDragStart(index);
     }, 300);
   }, [handleDragStart]);
+
+  // インデックス計算（タッチ位置から）
+  const calcTargetIndex = useCallback((clientY: number) => {
+    const rects = itemRects.current;
+    if (rects.length === 0) return 0;
+    for (let i = 0; i < rects.length; i++) {
+      const midY = rects[i].top + rects[i].height / 2;
+      if (clientY < midY) return i;
+    }
+    return rects.length - 1;
+  }, []);
 
   // タッチ移動
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (dragIndex === null) {
       // 長押し前にスクロールしたらキャンセル
       if (longPressTimer.current) {
-        const dy = Math.abs(e.touches[0].clientY - dragStartY.current);
-        if (dy > 10) {
+        const dy = Math.abs(e.touches[0].clientY - touchStartY.current);
+        const dx = Math.abs(e.touches[0].clientX - touchStartX.current);
+        if (dy > 10 || dx > 10) {
           clearTimeout(longPressTimer.current);
           longPressTimer.current = null;
         }
@@ -56,22 +81,9 @@ export default function Home() {
       return;
     }
     e.preventDefault();
-
-    const touch = e.touches[0];
-    const list = listRef.current;
-    if (!list) return;
-
-    const children = Array.from(list.children) as HTMLElement[];
-    for (let i = 0; i < children.length; i++) {
-      const rect = children[i].getBoundingClientRect();
-      const midY = rect.top + rect.height / 2;
-      if (touch.clientY < midY) {
-        setOverIndex(i);
-        return;
-      }
-    }
-    setOverIndex(children.length - 1);
-  }, [dragIndex]);
+    const target = calcTargetIndex(e.touches[0].clientY);
+    setCurrentIndex(target);
+  }, [dragIndex, calcTargetIndex]);
 
   // ドロップ
   const handleDrop = useCallback(() => {
@@ -79,15 +91,16 @@ export default function Home() {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
     }
-    if (dragIndex !== null && overIndex !== null && dragIndex !== overIndex) {
+    if (dragIndex !== null && currentIndex !== null && dragIndex !== currentIndex) {
       const newOrder = [...groups];
       const [moved] = newOrder.splice(dragIndex, 1);
-      newOrder.splice(overIndex, 0, moved);
+      newOrder.splice(currentIndex, 0, moved);
       reorderGroups(newOrder.map((g) => g.id));
     }
     setDragIndex(null);
-    setOverIndex(null);
-  }, [dragIndex, overIndex, groups, reorderGroups]);
+    setCurrentIndex(null);
+    scrollLocked.current = false;
+  }, [dragIndex, currentIndex, groups, reorderGroups]);
 
   // タッチキャンセル
   const handleTouchCancel = useCallback(() => {
@@ -96,8 +109,45 @@ export default function Home() {
       longPressTimer.current = null;
     }
     setDragIndex(null);
-    setOverIndex(null);
+    setCurrentIndex(null);
+    scrollLocked.current = false;
   }, []);
+
+  // ドラッグ中のスクロール防止
+  useEffect(() => {
+    if (dragIndex === null) return;
+    const prevent = (e: TouchEvent) => {
+      if (scrollLocked.current) e.preventDefault();
+    };
+    document.addEventListener("touchmove", prevent, { passive: false });
+    return () => document.removeEventListener("touchmove", prevent);
+  }, [dragIndex]);
+
+  // 各アイテムのtranslateYを計算
+  const getItemStyle = (index: number) => {
+    if (dragIndex === null || currentIndex === null) return {};
+    if (index === dragIndex) {
+      // ドラッグ中のアイテムは表示上の位置を移動
+      return {};
+    }
+    const rects = itemRects.current;
+    if (rects.length === 0) return {};
+    const itemH = (rects[0]?.height ?? 72) + 12; // height + gap
+
+    // ドラッグ元から移動先へアイテムがスライドする
+    if (dragIndex < currentIndex) {
+      // 下にドラッグ: dragIndex+1 ~ currentIndex のアイテムが上にスライド
+      if (index > dragIndex && index <= currentIndex) {
+        return { transform: `translateY(-${itemH}px)`, transition: "transform 200ms ease" };
+      }
+    } else if (dragIndex > currentIndex) {
+      // 上にドラッグ: currentIndex ~ dragIndex-1 のアイテムが下にスライド
+      if (index >= currentIndex && index < dragIndex) {
+        return { transform: `translateY(${itemH}px)`, transition: "transform 200ms ease" };
+      }
+    }
+    return { transition: "transform 200ms ease" };
+  };
 
   return (
     <div className="p-6">
@@ -138,29 +188,17 @@ export default function Home() {
       ) : groups.length > 0 ? (
         <div>
           <h2 className="text-lg font-semibold mb-3">グループ一覧</h2>
-          <div ref={listRef} className="space-y-3">
+          <div ref={listRef} className="flex flex-col gap-3">
             {groups.map((group, index) => {
               const isDragging = dragIndex === index;
-              // 挿入ラインの表示位置を計算
-              const showInsertBefore = dragIndex !== null && overIndex === index && dragIndex !== index && dragIndex > index;
-              const showInsertAfter = dragIndex !== null && overIndex === index && dragIndex !== index && dragIndex < index;
 
               return (
-                <div key={group.id} className="relative">
-                  {/* 挿入インジケーター（上） */}
-                  {showInsertBefore && (
-                    <div className="absolute -top-2 left-4 right-4 flex items-center gap-2 z-20">
-                      <div className="w-3 h-3 rounded-full bg-blue-400" />
-                      <div className="flex-1 h-0.5 bg-blue-400 rounded-full" />
-                      <div className="w-3 h-3 rounded-full bg-blue-400" />
-                    </div>
-                  )}
-                  <div
-                  className={`bg-zinc-900 rounded-2xl border p-5 transition-all duration-200 select-none ${
+                <div
+                  key={group.id}
+                  style={getItemStyle(index)}
+                  className={`bg-zinc-900 rounded-2xl border p-5 select-none ${
                     isDragging
-                      ? "border-blue-400 opacity-40 scale-[0.88] shadow-lg shadow-blue-500/25 rotate-[-1.5deg] z-10 relative"
-                      : dragIndex !== null
-                      ? "transition-transform duration-200 border-zinc-800"
+                      ? "border-blue-400 opacity-40 scale-[0.92] shadow-xl shadow-blue-500/30 z-10 relative"
                       : "border-zinc-800"
                   }`}
                   onTouchStart={(e) => handleTouchStart(e, index)}
@@ -212,15 +250,6 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-                  {/* 挿入インジケーター（下） */}
-                  {showInsertAfter && (
-                    <div className="absolute -bottom-2 left-4 right-4 flex items-center gap-2 z-20">
-                      <div className="w-3 h-3 rounded-full bg-blue-400" />
-                      <div className="flex-1 h-0.5 bg-blue-400 rounded-full" />
-                      <div className="w-3 h-3 rounded-full bg-blue-400" />
-                    </div>
-                  )}
-                </div>
               );
             })}
           </div>
@@ -232,17 +261,8 @@ export default function Home() {
         <div
           className="fixed inset-0 z-50 cursor-grabbing"
           onMouseMove={(e) => {
-            const list = listRef.current;
-            if (!list) return;
-            const children = Array.from(list.children) as HTMLElement[];
-            for (let i = 0; i < children.length; i++) {
-              const rect = children[i].getBoundingClientRect();
-              if (e.clientY < rect.top + rect.height / 2) {
-                setOverIndex(i);
-                return;
-              }
-            }
-            setOverIndex(children.length - 1);
+            const target = calcTargetIndex(e.clientY);
+            setCurrentIndex(target);
           }}
           onMouseUp={handleDrop}
         />
