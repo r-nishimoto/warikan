@@ -141,16 +141,26 @@ export default function Home() {
           <div ref={listRef} className="space-y-3">
             {groups.map((group, index) => {
               const isDragging = dragIndex === index;
-              const isOverTarget = overIndex === index && dragIndex !== null && dragIndex !== index;
+              // 挿入ラインの表示位置を計算
+              const showInsertBefore = dragIndex !== null && overIndex === index && dragIndex !== index && dragIndex > index;
+              const showInsertAfter = dragIndex !== null && overIndex === index && dragIndex !== index && dragIndex < index;
 
               return (
-                <div
-                  key={group.id}
-                  className={`bg-zinc-900 rounded-2xl border p-5 transition-all duration-150 select-none ${
+                <div key={group.id} className="relative">
+                  {/* 挿入インジケーター（上） */}
+                  {showInsertBefore && (
+                    <div className="absolute -top-2 left-4 right-4 flex items-center gap-2 z-20">
+                      <div className="w-3 h-3 rounded-full bg-blue-400" />
+                      <div className="flex-1 h-0.5 bg-blue-400 rounded-full" />
+                      <div className="w-3 h-3 rounded-full bg-blue-400" />
+                    </div>
+                  )}
+                  <div
+                  className={`bg-zinc-900 rounded-2xl border p-5 transition-all duration-200 select-none ${
                     isDragging
-                      ? "border-blue-500 opacity-60 scale-[0.97]"
-                      : isOverTarget
-                      ? "border-blue-500/50 translate-y-1"
+                      ? "border-blue-400 opacity-40 scale-[0.88] shadow-lg shadow-blue-500/25 rotate-[-1.5deg] z-10 relative"
+                      : dragIndex !== null
+                      ? "transition-transform duration-200 border-zinc-800"
                       : "border-zinc-800"
                   }`}
                   onTouchStart={(e) => handleTouchStart(e, index)}
@@ -201,6 +211,15 @@ export default function Home() {
                       </button>
                     </div>
                   </div>
+                </div>
+                  {/* 挿入インジケーター（下） */}
+                  {showInsertAfter && (
+                    <div className="absolute -bottom-2 left-4 right-4 flex items-center gap-2 z-20">
+                      <div className="w-3 h-3 rounded-full bg-blue-400" />
+                      <div className="flex-1 h-0.5 bg-blue-400 rounded-full" />
+                      <div className="w-3 h-3 rounded-full bg-blue-400" />
+                    </div>
+                  )}
                 </div>
               );
             })}
