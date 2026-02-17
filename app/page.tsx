@@ -113,14 +113,38 @@ export default function Home() {
     scrollLocked.current = false;
   }, []);
 
-  // ドラッグ中のスクロール防止
+  // ドラッグ中のスクロール完全防止
   useEffect(() => {
     if (dragIndex === null) return;
-    const prevent = (e: TouchEvent) => {
-      if (scrollLocked.current) e.preventDefault();
-    };
+
+    // 現在のスクロール位置を保存
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const html = document.documentElement;
+
+    // body固定でスクロールを完全に無効化
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.overflow = "hidden";
+    html.style.overflow = "hidden";
+
+    // touchmoveも念のためpreventDefault
+    const prevent = (e: TouchEvent) => e.preventDefault();
     document.addEventListener("touchmove", prevent, { passive: false });
-    return () => document.removeEventListener("touchmove", prevent);
+
+    return () => {
+      // 元に戻す
+      body.style.position = "";
+      body.style.top = "";
+      body.style.left = "";
+      body.style.right = "";
+      body.style.overflow = "";
+      html.style.overflow = "";
+      window.scrollTo(0, scrollY);
+      document.removeEventListener("touchmove", prevent);
+    };
   }, [dragIndex]);
 
   // 各アイテムのtranslateYを計算
