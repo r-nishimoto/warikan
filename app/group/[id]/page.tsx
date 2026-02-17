@@ -201,7 +201,7 @@ export default function GroupPage() {
           onClick={handleShare}
           className="text-sm px-4 py-2 bg-blue-500/10 text-blue-400 rounded-lg active:bg-blue-500/20"
         >
-          {copied ? "コピーしました!" : "共有"}
+          {copied ? "コピーしました!" : "グループに招待する"}
         </button>
       </div>
 
