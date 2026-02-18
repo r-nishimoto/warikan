@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Waroya - 割り勘をもっとスムーズに",
+    name: "Waroya - みんなでサクッと割り勘",
     short_name: "Waroya",
     description: "旅行やイベントの割り勘計算をスムーズに",
     start_url: "/",

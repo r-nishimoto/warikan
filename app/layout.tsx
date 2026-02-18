@@ -8,7 +8,7 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Waroya - 割り勘をもっとスムーズに",
+  title: "Waroya - みんなでサクッと割り勘",
   description: "旅行やイベントの割り勘計算をスムーズに",
   appleWebApp: {
     capable: true,

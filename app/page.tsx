@@ -177,7 +177,7 @@ export default function Home() {
           </svg>
           <h1 className="text-3xl font-bold text-white">Waroya</h1>
         </div>
-        <p className="text-zinc-500 text-sm">割り勘をもっとスムーズに</p>
+        <p className="text-zinc-500 text-sm">みんなでサクッと割り勘</p>
       </div>
 
       <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 mb-8">
