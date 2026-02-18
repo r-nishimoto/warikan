@@ -344,7 +344,7 @@ export default function GroupPage() {
 
       {/* メンバー */}
       <section className="mb-8">
-        <h2 className="text-base font-semibold mb-3">メンバー</h2>
+        <h2 className="text-base font-bold mb-3 pl-3 border-l-4 border-blue-500">メンバー</h2>
         <div className="flex gap-2 mb-3">
           <input
             type="text"
@@ -405,7 +405,7 @@ export default function GroupPage() {
       {/* 支出追加フォーム（インライン） */}
       {group.members.length >= 2 && (
         <section className="mb-8">
-          <h2 className="text-base font-semibold mb-3">支出を追加</h2>
+          <h2 className="text-base font-bold mb-3 pl-3 border-l-4 border-blue-500">支出を追加</h2>
           <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5 space-y-4">
             <input
               type="text"
@@ -655,7 +655,7 @@ export default function GroupPage() {
       {/* 支出一覧 */}
       {group.expenses.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-base font-semibold mb-3">支出一覧</h2>
+          <h2 className="text-base font-bold mb-3 pl-3 border-l-4 border-blue-500">支出一覧</h2>
           <div className="space-y-2">
             {group.expenses
               .sort((a, b) => b.date - a.date)

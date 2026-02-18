@@ -98,26 +98,6 @@ export default function SettlementsPage() {
       <h1 className="text-xl font-bold mb-2">精算結果</h1>
       <p className="text-zinc-500 text-sm mb-6">{group.name}</p>
 
-      {/* 端数処理の選択 */}
-      <div className="mb-6">
-        <label className="block text-xs text-zinc-500 mb-2">端数処理</label>
-        <div className="flex rounded-xl overflow-hidden border border-zinc-800">
-          {ROUNDING_UNITS.map((unit) => (
-            <button
-              key={unit.value}
-              onClick={() => setRoundingUnit(unit.value)}
-              className={`flex-1 py-2 text-sm font-medium transition-colors ${
-                roundingUnit === unit.value
-                  ? "bg-blue-500 text-white"
-                  : "bg-zinc-900 text-zinc-400 active:bg-zinc-800"
-              }`}
-            >
-              {unit.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {settlements.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-zinc-500">精算の必要はありません</p>
@@ -205,6 +185,26 @@ export default function SettlementsPage() {
           </div>
         </>
       )}
+
+      {/* 端数処理の選択 */}
+      <div className="mt-6">
+        <label className="block text-xs text-zinc-500 mb-2">端数処理</label>
+        <div className="flex rounded-xl overflow-hidden border border-zinc-800">
+          {ROUNDING_UNITS.map((unit) => (
+            <button
+              key={unit.value}
+              onClick={() => setRoundingUnit(unit.value)}
+              className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                roundingUnit === unit.value
+                  ? "bg-blue-500 text-white"
+                  : "bg-zinc-900 text-zinc-400 active:bg-zinc-800"
+              }`}
+            >
+              {unit.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="space-y-3 mt-6">
         <Link
