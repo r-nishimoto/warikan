@@ -166,9 +166,33 @@ export default function Home() {
 
   return (
     <div className="p-6">
-      <div className="text-center py-8">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Waroya</h1>
-        <p className="text-zinc-500 mt-2">割り勘をもっとスムーズに</p>
+      <div className="flex flex-col items-center py-8">
+        <div className="flex items-center gap-3 mb-2">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            {/* 左半円（コイン左） */}
+            <path d="M20 4C11.163 4 4 11.163 4 20s7.163 16 16 16" stroke="url(#grad1)" strokeWidth="3" strokeLinecap="round" fill="none" />
+            {/* 右半円（コイン右） */}
+            <path d="M20 4c8.837 0 16 7.163 16 16s-7.163 16-16 16" stroke="url(#grad2)" strokeWidth="3" strokeLinecap="round" fill="none" />
+            {/* 分割線 */}
+            <line x1="20" y1="8" x2="20" y2="32" stroke="#52525b" strokeWidth="2" strokeDasharray="3 3" />
+            {/* 左の¥ */}
+            <text x="11" y="24" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#60a5fa">¥</text>
+            {/* 右の¥ */}
+            <text x="29" y="24" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#22d3ee">¥</text>
+            <defs>
+              <linearGradient id="grad1" x1="4" y1="20" x2="20" y2="20">
+                <stop offset="0%" stopColor="#60a5fa" />
+                <stop offset="100%" stopColor="#60a5fa" />
+              </linearGradient>
+              <linearGradient id="grad2" x1="20" y1="20" x2="36" y2="20">
+                <stop offset="0%" stopColor="#22d3ee" />
+                <stop offset="100%" stopColor="#22d3ee" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Waroya</h1>
+        </div>
+        <p className="text-zinc-500 text-sm">割り勘をもっとスムーズに</p>
       </div>
 
       <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 mb-8">
