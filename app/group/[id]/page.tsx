@@ -987,7 +987,7 @@ export default function GroupPage() {
       {group.expenses.length > 0 && group.members.length >= 2 && (
         <Link
           href={`/group/${group.id}/settlements`}
-          className="block w-full text-center py-3 bg-emerald-500 text-white rounded-xl font-medium active:bg-emerald-600 mb-3"
+          className="block w-full text-center py-3 bg-blue-500 text-white rounded-xl font-medium active:bg-blue-600 mb-3"
         >
           精算結果をみる
         </Link>
