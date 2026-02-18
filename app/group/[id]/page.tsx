@@ -916,6 +916,18 @@ export default function GroupPage() {
                           保存
                         </button>
                       </div>
+
+                      <button
+                        onClick={() => {
+                          if (window.confirm(`「${editDesc}」を本当に削除しますか？`)) {
+                            removeExpense(expense.id);
+                            cancelEditing();
+                          }
+                        }}
+                        className="w-full py-2 text-xs text-rose-400 active:text-rose-300"
+                      >
+                        この支出を削除する
+                      </button>
                     </div>
                   );
                 }
@@ -927,35 +939,41 @@ export default function GroupPage() {
                     onClick={() => startEditing(expense)}
                   >
                     <div className="min-w-0 flex-1">
-                      <div className="font-medium text-sm truncate">
-                        {expense.description}
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-medium text-sm truncate">
+                          {expense.description}
+                        </span>
+                        <svg className="w-3 h-3 text-zinc-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
                       </div>
-                      <div className="text-xs text-zinc-500">
+                      <div className="text-xs text-zinc-500 mt-0.5">
                         {expense.expenseDate && `${expense.expenseDate} ・ `}
                         {payer?.name || "不明"} が支払い ・{" "}
-                        {PAYMENT_METHODS.find((m) => m.value === expense.paymentMethod)?.label || "現金"} ・{" "}
-                        {expense.splitAmong.length}人で分割
+                        {PAYMENT_METHODS.find((m) => m.value === expense.paymentMethod)?.label || "現金"}
                         {expense.adjustments && expense.adjustments.length > 0 && (
                           <span className="text-orange-400"> ・ 調整あり</span>
                         )}
                       </div>
+                      <div className="flex items-center gap-1 mt-1.5">
+                        {expense.splitAmong.map((memberId) => {
+                          const member = group.members.find((m) => m.id === memberId);
+                          const initial = member?.name?.charAt(0) || "?";
+                          return (
+                            <span
+                              key={memberId}
+                              className="w-5 h-5 rounded-full bg-zinc-700 text-zinc-300 text-[10px] font-medium flex items-center justify-center"
+                              title={member?.name}
+                            >
+                              {initial}
+                            </span>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="font-semibold text-sm">
-                        {formatCurrency(expense.amount)}
-                      </span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (window.confirm(`「${expense.description}」を本当に削除しますか？`)) {
-                            removeExpense(expense.id);
-                          }
-                        }}
-                        className="px-2 py-1 text-xs text-rose-400 border border-rose-500/30 rounded-lg hover:bg-rose-500/10"
-                      >
-                        削除
-                      </button>
-                    </div>
+                    <span className="font-semibold text-sm flex-shrink-0 ml-3">
+                      {formatCurrency(expense.amount)}
+                    </span>
                   </div>
                 );
               })}
