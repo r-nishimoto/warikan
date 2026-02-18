@@ -136,11 +136,11 @@ export default function SettlementsPage() {
                   </button>
                   <div className="flex-1">
                     <div className={`flex items-center gap-2 text-base ${isCompleted ? "line-through opacity-60" : ""}`}>
-                      <span className="font-semibold text-rose-400">
+                      <span className="font-semibold">
                         {getMemberName(s.from)}
                       </span>
                       <span className="text-zinc-500">→</span>
-                      <span className="font-semibold text-emerald-400">
+                      <span className="font-semibold">
                         {getMemberName(s.to)}
                       </span>
                     </div>
