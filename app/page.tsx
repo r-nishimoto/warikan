@@ -248,8 +248,19 @@ export default function Home() {
                       }}
                     >
                       <div className="text-lg font-bold truncate mb-1">{group.name}</div>
+                      <div className="flex items-center gap-1 mb-1">
+                        {group.members.map((member) => (
+                          <span
+                            key={member.id}
+                            className="w-5 h-5 rounded-full bg-zinc-700 text-zinc-300 text-[10px] font-medium flex items-center justify-center"
+                            title={member.name}
+                          >
+                            {member.name.charAt(0)}
+                          </span>
+                        ))}
+                      </div>
                       <div className="text-sm text-zinc-500">
-                        {group.members.length}人 ・ {group.expenses.length}件の支出 ・ {formatCurrency(group.expenses.reduce((sum, e) => sum + e.amount, 0))}
+                        {group.expenses.length}件の支出 ・ {formatCurrency(group.expenses.reduce((sum, e) => sum + e.amount, 0))}
                       </div>
                     </Link>
                     <div className="flex items-center gap-2 ml-3">
