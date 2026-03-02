@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useGroups } from "@/lib/useGroups";
 import { formatCurrency } from "@/lib/utils";
+import { LandingContent } from "@/components/LandingContent";
 import Link from "next/link";
 
 export default function Home() {
@@ -159,6 +160,9 @@ export default function Home() {
       >
         はじめる
       </Link>
+
+      {/* LP */}
+      <LandingContent />
 
       {/* グループ一覧 */}
       {loading ? (
