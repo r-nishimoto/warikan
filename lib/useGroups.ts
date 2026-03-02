@@ -80,7 +80,7 @@ export function useGroups() {
     fetchGroups();
   }, [fetchGroups]);
 
-  const addGroup = useCallback(async (name: string): Promise<Group> => {
+  const addGroup = useCallback(async (name: string, memberNames?: string[]): Promise<Group> => {
     const groupId = nanoid(8);
     const now = Date.now();
     const { error } = await supabase.from("groups").insert({
@@ -94,13 +94,30 @@ export function useGroups() {
       console.error("Failed to create group:", error);
       throw new Error("グループの作成に失敗しました");
     }
+
+    // メンバーも一括作成
+    const members: { id: string; name: string }[] = [];
+    if (memberNames && memberNames.length > 0) {
+      const memberRows = memberNames.map((mn) => {
+        const memberId = nanoid(6);
+        members.push({ id: memberId, name: mn });
+        return {
+          id: memberId,
+          group_id: groupId,
+          name: mn,
+          preferred_receiving_method: null,
+        };
+      });
+      await supabase.from("members").insert(memberRows);
+    }
+
     addLocalGroupId(groupId);
 
     const newGroup: Group = {
       id: groupId,
       name,
       currency: "JPY",
-      members: [],
+      members: members.map((m) => ({ id: m.id, name: m.name })),
       expenses: [],
       completedSettlements: [],
       createdAt: now,

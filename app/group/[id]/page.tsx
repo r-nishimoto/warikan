@@ -5,8 +5,8 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useGroup } from "@/lib/useGroup";
 import { formatCurrency, formatNumberWithCommas, removeCommas } from "@/lib/utils";
-import { Adjustment, Expense, PaymentMethod, PAYMENT_METHODS, ReceivingMethod, RECEIVING_METHODS } from "@/lib/types";
-import { calculateMemberShares } from "@/lib/settlement";
+import { Adjustment, Expense, PaymentMethod, PAYMENT_METHODS, RECEIVING_METHODS, RoundingUnit, ROUNDING_UNITS } from "@/lib/types";
+import { calculateMemberShares, calculateSettlements } from "@/lib/settlement";
 
 export default function GroupPage() {
   const { id } = useParams<{ id: string }>();
@@ -14,40 +14,19 @@ export default function GroupPage() {
     group,
     loading,
     error,
-    addMember,
-    removeMember,
-    addExpense,
     updateExpense,
     removeExpense,
     resetGroupExpenses,
-    updateMemberPreference,
-    updateGroupName,
+    toggleSettlementCompleted,
   } = useGroup(id);
 
-  // グループ名編集
-  const [editingGroupName, setEditingGroupName] = useState(false);
-  const [groupNameInput, setGroupNameInput] = useState("");
-  const [groupNameComposing, setGroupNameComposing] = useState(false);
-
-  const [memberName, setMemberName] = useState("");
-  const [memberComposing, setMemberComposing] = useState(false);
-  const [copied, setCopied] = useState(false);
+  // 共有URL
   const [urlCopied, setUrlCopied] = useState(false);
 
-  // 支出フォーム
-  const [description, setDescription] = useState("");
-  const [amount, setAmount] = useState("");
-  const [paidBy, setPaidBy] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
-  const [splitAmong, setSplitAmong] = useState<string[]>([]);
-  const [expenseDate, setExpenseDate] = useState("");
-  const [descComposing, setDescComposing] = useState(false);
-  const [memberError, setMemberError] = useState("");
-
-  // 調整（Add form）
-  type AdjustmentInput = { memberIds: string[]; amount: string; memo: string };
-  const [adjustments, setAdjustments] = useState<AdjustmentInput[]>([]);
-  const [showAdjustments, setShowAdjustments] = useState(false);
+  // 精算
+  const [roundingUnit, setRoundingUnit] = useState<RoundingUnit>(1);
+  const [copiedText, setCopiedText] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState(false);
 
   // 編集モード
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -60,6 +39,7 @@ export default function GroupPage() {
   const [editDescComposing, setEditDescComposing] = useState(false);
 
   // 調整（Edit form）
+  type AdjustmentInput = { memberIds: string[]; amount: string; memo: string };
   const [editAdjustments, setEditAdjustments] = useState<AdjustmentInput[]>([]);
   const [showEditAdjustments, setShowEditAdjustments] = useState(false);
 
@@ -81,11 +61,8 @@ export default function GroupPage() {
     setShowEditAdjustments((expense.adjustments?.length || 0) > 0);
   };
 
-  const cancelEditing = () => {
-    setEditingId(null);
-  };
+  const cancelEditing = () => setEditingId(null);
 
-  // 調整入力 → Adjustment[] に変換するヘルパー
   const parseAdjustments = (inputs: AdjustmentInput[]): Adjustment[] | undefined => {
     const parsed = inputs
       .filter((adj) => adj.memberIds.length > 0 && parseInt(adj.amount, 10) > 0)
@@ -100,8 +77,7 @@ export default function GroupPage() {
   const handleSaveEdit = useCallback(async () => {
     if (!group || !editingId) return;
     const numAmount = parseInt(editAmount, 10);
-    if (!editDesc.trim() || !numAmount || !editPaidBy || editSplitAmong.length === 0)
-      return;
+    if (!editDesc.trim() || !numAmount || !editPaidBy || editSplitAmong.length === 0) return;
     await updateExpense(editingId, {
       description: editDesc.trim(),
       amount: numAmount,
@@ -120,7 +96,6 @@ export default function GroupPage() {
       const next = prev.includes(memberId)
         ? prev.filter((id) => id !== memberId)
         : [...prev, memberId];
-      // splitAmongから外れたメンバーをadjustmentsからも除去
       if (!next.includes(memberId)) {
         setEditAdjustments((prevAdj) =>
           prevAdj.map((adj) => ({
@@ -133,19 +108,6 @@ export default function GroupPage() {
     });
   };
 
-  const handleAddMember = useCallback(async () => {
-    if (!memberName.trim() || !group) return;
-    const trimmed = memberName.trim();
-    if (group.members.some((m) => m.name === trimmed)) {
-      setMemberError("名前が重複しているため登録できません");
-      setTimeout(() => setMemberError(""), 3000);
-      return;
-    }
-    setMemberError("");
-    await addMember(trimmed);
-    setMemberName("");
-  }, [memberName, group, addMember]);
-
   const groupUrl = group ? `${typeof window !== "undefined" ? window.location.origin : ""}/group/${group?.id}` : "";
 
   const handleCopyUrl = useCallback(async () => {
@@ -154,9 +116,7 @@ export default function GroupPage() {
       await navigator.clipboard.writeText(groupUrl);
       setUrlCopied(true);
       setTimeout(() => setUrlCopied(false), 2000);
-    } catch {
-      // fallback
-    }
+    } catch { /* fallback */ }
   }, [groupUrl]);
 
   const handleShare = useCallback(async () => {
@@ -171,57 +131,8 @@ export default function GroupPage() {
       } else {
         await handleCopyUrl();
       }
-    } catch {
-      // user cancelled share dialog
-    }
+    } catch { /* user cancelled */ }
   }, [group, groupUrl, handleCopyUrl]);
-
-  const handleAddExpense = useCallback(async () => {
-    if (!group) return;
-    const numAmount = parseInt(amount, 10);
-    if (!description.trim() || !numAmount || !paidBy || splitAmong.length === 0)
-      return;
-    await addExpense({
-      description: description.trim(),
-      amount: numAmount,
-      paidBy,
-      paymentMethod,
-      splitAmong,
-      expenseDate: expenseDate || undefined,
-      date: Date.now(),
-      adjustments: parseAdjustments(adjustments),
-    });
-    setDescription("");
-    setAmount("");
-    setPaidBy("");
-    setPaymentMethod("cash");
-    setExpenseDate("");
-    setSplitAmong([]);
-    setAdjustments([]);
-    setShowAdjustments(false);
-  }, [group, description, amount, paidBy, paymentMethod, splitAmong, expenseDate, adjustments, addExpense]);
-
-  const toggleSplitMember = (memberId: string) => {
-    setSplitAmong((prev) => {
-      const next = prev.includes(memberId)
-        ? prev.filter((id) => id !== memberId)
-        : [...prev, memberId];
-      if (!next.includes(memberId)) {
-        setAdjustments((prevAdj) =>
-          prevAdj.map((adj) => ({
-            ...adj,
-            memberIds: adj.memberIds.filter((id) => next.includes(id)),
-          })).filter((adj) => adj.memberIds.length > 0)
-        );
-      }
-      return next;
-    });
-  };
-
-  const selectAllMembers = () => {
-    if (!group) return;
-    setSplitAmong(group.members.map((m) => m.id));
-  };
 
   if (loading) {
     return (
@@ -235,444 +146,155 @@ export default function GroupPage() {
     return (
       <div className="p-6 text-center py-20">
         <p className="text-zinc-500 mb-4">{error || "グループが見つかりません"}</p>
-        <Link href="/" className="text-blue-400">
-          ホームに戻る
-        </Link>
+        <Link href="/" className="text-blue-400">ホームに戻る</Link>
       </div>
     );
   }
 
   const totalExpenses = group.expenses.reduce((sum, e) => sum + e.amount, 0);
-  const isExpenseValid =
-    description.trim() &&
-    parseInt(amount, 10) > 0 &&
-    paidBy &&
-    splitAmong.length > 0;
   const isEditValid =
     editDesc.trim() &&
     parseInt(editAmount, 10) > 0 &&
     editPaidBy &&
     editSplitAmong.length > 0;
 
+  // 精算計算
+  const settlements = calculateSettlements(group.members, group.expenses, roundingUnit);
+  const completedKeys = group.completedSettlements || [];
+  const getMemberName = (memberId: string) =>
+    group.members.find((m) => m.id === memberId)?.name || "不明";
+  const getMemberReceivingMethod = (memberId: string) => {
+    const member = group.members.find((m) => m.id === memberId);
+    const method = member?.preferredReceivingMethod;
+    if (!method || method === "any") return null;
+    return RECEIVING_METHODS.find((m) => m.value === method)?.label || null;
+  };
+  const getSettlementKey = (from: string, to: string) => `${from}->${to}`;
+  const allCompleted = settlements.length > 0 && settlements.every((s) =>
+    completedKeys.includes(getSettlementKey(s.from, s.to))
+  );
+
+  const buildSettlementText = () => {
+    const lines = [`【${group.name}】精算結果`, ""];
+    if (roundingUnit > 1) {
+      lines.push(`※${roundingUnit}円単位で端数切り上げ`);
+      lines.push("");
+    }
+    settlements.forEach((s) => {
+      const key = getSettlementKey(s.from, s.to);
+      const done = completedKeys.includes(key);
+      const receivingMethod = getMemberReceivingMethod(s.to);
+      const methodSuffix = receivingMethod ? `（${receivingMethod}で）` : "";
+      lines.push(
+        `${done ? "✅ " : ""}${getMemberName(s.from)} → ${getMemberName(s.to)}：${formatCurrency(s.amount)}${methodSuffix}`
+      );
+    });
+    return lines.join("\n");
+  };
+
+  const handleCopySettlementText = async () => {
+    await navigator.clipboard.writeText(buildSettlementText());
+    setCopiedText(true);
+    setTimeout(() => setCopiedText(false), 2000);
+  };
+
+  const handleCopySettlementUrl = async () => {
+    const url = `${window.location.origin}/group/${group.id}`;
+    await navigator.clipboard.writeText(url);
+    setCopiedUrl(true);
+    setTimeout(() => setCopiedUrl(false), 2000);
+  };
+
+  const handleLineShare = () => {
+    const text = buildSettlementText();
+    const url = `https://line.me/R/share?text=${encodeURIComponent(text)}`;
+    window.open(url, "_blank");
+  };
+
   return (
     <div className="p-6 pb-8">
       {/* ヘッダー */}
-      <div className="mb-6">
-        <Link href="/" className="text-blue-400 text-sm">
-          ← グループ作成画面に戻る
-        </Link>
+      <div className="flex items-center justify-between mb-6">
+        <Link href="/" className="text-blue-400 text-sm">← ホーム</Link>
       </div>
 
-      {/* 招待URL */}
-      <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5 mb-6">
-        <p className="text-sm text-zinc-400 mb-3">このURLをメンバーに共有してください</p>
-        <div className="flex items-center gap-2">
-          <div className="flex-1 min-w-0 px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-xl text-sm text-zinc-300 truncate">
-            {groupUrl}
-          </div>
-          <button
-            onClick={handleCopyUrl}
-            className="flex-shrink-0 px-4 py-2.5 bg-blue-500 text-white rounded-xl text-sm font-medium active:bg-blue-600"
+      {/* グループ名 + メンバー表示 */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">{group.name}</h1>
+          <Link
+            href={`/group/${group.id}/edit`}
+            className="p-2 text-zinc-500 hover:text-zinc-300 active:text-zinc-300"
           >
-            {urlCopied ? "✓ コピー!" : "コピー"}
-          </button>
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+          </Link>
+        </div>
+        <div className="flex items-center gap-1 mt-1">
+          {group.members.map((member) => (
+            <span
+              key={member.id}
+              className="w-6 h-6 rounded-full bg-zinc-700 text-zinc-300 text-[11px] font-medium flex items-center justify-center"
+              title={member.name}
+            >
+              {member.name.charAt(0)}
+            </span>
+          ))}
+          {group.members.length === 0 && (
+            <Link href={`/group/${group.id}/edit`} className="text-sm text-blue-400">
+              メンバーを追加
+            </Link>
+          )}
+        </div>
+      </div>
+
+      {/* 招待URL（折りたたみ） */}
+      <div className="flex items-center gap-2 mb-6">
+        <div className="flex-1 min-w-0 px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-zinc-500 truncate">
+          {groupUrl}
         </div>
         <button
-          onClick={handleShare}
-          className="mt-3 text-xs text-zinc-500 underline underline-offset-2 active:text-zinc-400"
+          onClick={handleCopyUrl}
+          className="flex-shrink-0 px-3 py-2 bg-zinc-800 text-zinc-300 rounded-lg text-xs font-medium active:bg-zinc-700"
         >
-          その他の方法で招待する
+          {urlCopied ? "✓" : "コピー"}
+        </button>
+        <button
+          onClick={handleShare}
+          className="flex-shrink-0 px-3 py-2 bg-blue-500 text-white rounded-lg text-xs font-medium active:bg-blue-600"
+        >
+          共有
         </button>
       </div>
 
-      {editingGroupName ? (
-        <div className="mb-1 space-y-2">
-          <input
-            type="text"
-            value={groupNameInput}
-            onChange={(e) => setGroupNameInput(e.target.value)}
-            onCompositionStart={() => setGroupNameComposing(true)}
-            onCompositionEnd={() => setGroupNameComposing(false)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !groupNameComposing) {
-                if (groupNameInput.trim()) {
-                  updateGroupName(groupNameInput.trim());
-                }
-                setEditingGroupName(false);
-              }
-              if (e.key === "Escape") setEditingGroupName(false);
-            }}
-            autoFocus
-            className="w-full px-3 py-2 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-2xl font-bold"
-          />
-          <div className="flex gap-2">
-            <button
-              onClick={() => setEditingGroupName(false)}
-              className="flex-1 py-2 border border-zinc-700 text-zinc-400 rounded-xl font-medium text-sm active:bg-zinc-800"
-            >
-              キャンセル
-            </button>
-            <button
-              onClick={() => {
-                if (groupNameInput.trim()) {
-                  updateGroupName(groupNameInput.trim());
-                }
-                setEditingGroupName(false);
-              }}
-              disabled={!groupNameInput.trim()}
-              className="flex-1 py-2 bg-blue-500 text-white rounded-xl font-medium text-sm disabled:opacity-30 active:bg-blue-600"
-            >
-              保存
-            </button>
-          </div>
-        </div>
-      ) : (
-        <h1
-          className="text-2xl font-bold mb-1 flex items-center gap-2 cursor-pointer group"
-          onClick={() => {
-            setGroupNameInput(group.name);
-            setEditingGroupName(true);
-          }}
-        >
-          {group.name}
-          <svg className="w-4 h-4 text-zinc-600 group-hover:text-zinc-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-          </svg>
-        </h1>
-      )}
-      <p className="text-zinc-500 text-sm mb-6">
-        合計: {formatCurrency(totalExpenses)}
-      </p>
-
-      {/* メンバー */}
-      <section className="mb-8">
-        <h2 className="text-base font-bold mb-3 pl-3 border-l-4 border-blue-500">メンバー</h2>
-        <div className="flex gap-2 mb-3">
-          <input
-            type="text"
-            value={memberName}
-            onChange={(e) => setMemberName(e.target.value)}
-            onCompositionStart={() => setMemberComposing(true)}
-            onCompositionEnd={() => setMemberComposing(false)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !memberComposing) handleAddMember();
-            }}
-            placeholder="名前を入力"
-            className="flex-1 px-4 py-2.5 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-zinc-500"
-          />
-          <button
-            onClick={handleAddMember}
-            disabled={!memberName.trim()}
-            className="px-4 py-2.5 bg-blue-500 text-white rounded-xl text-sm font-medium disabled:opacity-30"
-          >
-            追加
-          </button>
-        </div>
-        {memberError && (
-          <p className="text-rose-400 text-xs mb-2">{memberError}</p>
-        )}
-        {group.members.length === 0 ? (
-          <p className="text-zinc-600 text-sm">メンバーを追加してください</p>
-        ) : (
-          <div className="space-y-2">
-            {group.members.map((member) => (
-              <div
-                key={member.id}
-                className="flex items-center gap-2 bg-zinc-800/50 rounded-xl px-3 py-2"
-              >
-                <span className="text-sm font-medium flex-shrink-0">{member.name}</span>
-                <select
-                  value={member.preferredReceivingMethod || "any"}
-                  onChange={(e) => updateMemberPreference(member.id, e.target.value as ReceivingMethod)}
-                  className="flex-1 text-xs px-2 py-1 border border-zinc-700 rounded-lg bg-zinc-800 appearance-none text-zinc-500"
-                >
-                  {RECEIVING_METHODS.map((m) => (
-                    <option key={m.value} value={m.value}>
-                      受取: {m.label}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  onClick={() => removeMember(member.id)}
-                  className="text-zinc-500 hover:text-rose-400 text-sm flex-shrink-0"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* 支出追加フォーム（インライン） */}
+      {/* 立て替えを追加 CTA */}
       {group.members.length >= 2 && (
-        <section className="mb-8">
-          <h2 className="text-base font-bold mb-3 pl-3 border-l-4 border-blue-500">支出を追加</h2>
-          <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5 space-y-4">
-            <input
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              onCompositionStart={() => setDescComposing(true)}
-              onCompositionEnd={() => setDescComposing(false)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !descComposing && isExpenseValid)
-                  handleAddExpense();
-              }}
-              placeholder="内容（例: 居酒屋での夕食）"
-              className="w-full px-4 py-2.5 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-zinc-500"
-            />
-            <input
-              type="text"
-              inputMode="numeric"
-              value={formatNumberWithCommas(amount)}
-              onChange={(e) => {
-                const v = removeCommas(e.target.value).replace(/[^0-9]/g, "");
-                setAmount(v);
-              }}
-              placeholder="金額（円）"
-              className="w-full px-4 py-2.5 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-zinc-500"
-            />
-            <div>
-              <label className="block text-xs text-zinc-500 mb-1.5">
-                日付（任意）
-              </label>
-              <input
-                type="date"
-                value={expenseDate}
-                onChange={(e) => setExpenseDate(e.target.value)}
-                className="w-full px-4 py-2.5 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-zinc-500 mb-1.5">
-                誰が支払った？
-              </label>
-              <select
-                value={paidBy}
-                onChange={(e) => setPaidBy(e.target.value)}
-                className="w-full px-4 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-zinc-800 appearance-none"
-              >
-                <option value="">選択してください</option>
-                {group.members.map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {member.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs text-zinc-500 mb-1.5">
-                支払い方法
-              </label>
-              <select
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
-                className="w-full px-4 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-zinc-800 appearance-none"
-              >
-                {PAYMENT_METHODS.map((method) => (
-                  <option key={method.value} value={method.value}>
-                    {method.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs text-zinc-500">誰で割り勘？</label>
-                <button
-                  onClick={selectAllMembers}
-                  className="text-xs text-blue-400 active:text-blue-300"
-                >
-                  全員選択
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {group.members.map((member) => (
-                  <button
-                    key={member.id}
-                    onClick={() => toggleSplitMember(member.id)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                      splitAmong.includes(member.id)
-                        ? "bg-emerald-500 text-white border-emerald-500"
-                        : "bg-zinc-800 border-zinc-700 text-zinc-300 active:bg-zinc-700"
-                    }`}
-                  >
-                    {member.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 割引・調整（任意） */}
-            {splitAmong.length > 0 && (
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setShowAdjustments(!showAdjustments)}
-                  className="flex items-center gap-1.5 text-xs text-zinc-500 active:text-zinc-400"
-                >
-                  <span className={`transition-transform duration-150 ${showAdjustments ? "rotate-90" : ""}`}>▶</span>
-                  割引・調整（任意）
-                  {adjustments.length > 0 && (
-                    <span className="ml-1 px-1.5 py-0.5 bg-orange-500/20 text-orange-400 rounded-full text-[10px]">
-                      {adjustments.length}
-                    </span>
-                  )}
-                </button>
-
-                {showAdjustments && (
-                  <div className="mt-3 space-y-3">
-                    {adjustments.map((adj, index) => (
-                      <div key={index} className="bg-zinc-800/50 rounded-xl p-3 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-zinc-500">調整 {index + 1}</span>
-                          <button
-                            onClick={() => setAdjustments((prev) => prev.filter((_, i) => i !== index))}
-                            className="text-xs text-rose-400 active:text-rose-300"
-                          >
-                            削除
-                          </button>
-                        </div>
-                        <div>
-                          <label className="block text-xs text-zinc-500 mb-1">対象メンバー</label>
-                          <div className="flex flex-wrap gap-1.5">
-                            {group.members
-                              .filter((m) => splitAmong.includes(m.id))
-                              .map((member) => (
-                                <button
-                                  key={member.id}
-                                  onClick={() => {
-                                    setAdjustments((prev) =>
-                                      prev.map((a, i) =>
-                                        i === index
-                                          ? { ...a, memberIds: a.memberIds.includes(member.id) ? a.memberIds.filter((id) => id !== member.id) : [...a.memberIds, member.id] }
-                                          : a
-                                      )
-                                    );
-                                  }}
-                                  className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
-                                    adj.memberIds.includes(member.id)
-                                      ? "bg-orange-500 text-white border-orange-500"
-                                      : "bg-zinc-800 border-zinc-700 text-zinc-400 active:bg-zinc-700"
-                                  }`}
-                                >
-                                  {member.name}
-                                </button>
-                              ))}
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block text-xs text-zinc-500 mb-1">割引額（1人あたり）</label>
-                          <div className="flex items-center gap-2">
-                            <span className="text-zinc-500 text-sm">-</span>
-                            <input
-                              type="text"
-                              inputMode="numeric"
-                              value={formatNumberWithCommas(adj.amount)}
-                              onChange={(e) => {
-                                const v = removeCommas(e.target.value).replace(/[^0-9]/g, "");
-                                setAdjustments((prev) => prev.map((a, i) => (i === index ? { ...a, amount: v } : a)));
-                              }}
-                              placeholder="1000"
-                              className="flex-1 px-3 py-2 border border-zinc-700 bg-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-zinc-600"
-                            />
-                            <span className="text-zinc-500 text-sm">円</span>
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block text-xs text-zinc-500 mb-1">メモ（任意）</label>
-                          <input
-                            type="text"
-                            value={adj.memo}
-                            onChange={(e) => setAdjustments((prev) => prev.map((a, i) => (i === index ? { ...a, memo: e.target.value } : a)))}
-                            placeholder="例: ノンアル"
-                            className="w-full px-3 py-2 border border-zinc-700 bg-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-zinc-600"
-                          />
-                        </div>
-                      </div>
-                    ))}
-
-                    <button
-                      onClick={() => setAdjustments((prev) => [...prev, { memberIds: [], amount: "", memo: "" }])}
-                      className="w-full py-2 border border-dashed border-zinc-700 text-zinc-500 rounded-xl text-sm active:bg-zinc-800"
-                    >
-                      + 調整を追加
-                    </button>
-
-                    {/* プレビュー */}
-                    {adjustments.some((a) => a.memberIds.length > 0 && parseInt(a.amount, 10) > 0) &&
-                      parseInt(amount, 10) > 0 &&
-                      splitAmong.length > 0 && (
-                        <div className="bg-zinc-800/30 rounded-xl p-3">
-                          <p className="text-xs text-zinc-500 mb-2">調整後の1人あたり金額（目安）</p>
-                          <div className="space-y-1">
-                            {(() => {
-                              const tempExpense: Expense = {
-                                id: "preview",
-                                description: "",
-                                amount: parseInt(amount, 10),
-                                paidBy: "",
-                                paymentMethod: "cash",
-                                splitAmong,
-                                date: 0,
-                                adjustments: parseAdjustments(adjustments),
-                              };
-                              const shares = calculateMemberShares(tempExpense);
-                              return splitAmong.map((memberId) => {
-                                const member = group.members.find((m) => m.id === memberId);
-                                const share = shares.get(memberId) || 0;
-                                const baseShare = Math.round(parseInt(amount, 10) / splitAmong.length);
-                                const diff = share - baseShare;
-                                return (
-                                  <div key={memberId} className="flex justify-between text-xs">
-                                    <span className="text-zinc-400">{member?.name}</span>
-                                    <span className={diff !== 0 ? "text-orange-400" : "text-zinc-300"}>
-                                      {formatCurrency(share)}
-                                      {diff !== 0 && ` (${diff > 0 ? "+" : ""}${formatCurrency(diff)})`}
-                                    </span>
-                                  </div>
-                                );
-                              });
-                            })()}
-                          </div>
-                        </div>
-                      )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            <button
-              onClick={handleAddExpense}
-              disabled={!isExpenseValid}
-              className="w-full py-2.5 bg-blue-500 text-white rounded-xl font-medium text-sm disabled:opacity-30 active:bg-blue-600"
-            >
-              支出を追加する
-            </button>
-          </div>
-        </section>
+        <Link
+          href={`/group/${group.id}/add-expense`}
+          className="block w-full text-center py-3.5 bg-blue-500 text-white rounded-xl font-medium active:bg-blue-600 mb-6"
+        >
+          立て替えを追加
+        </Link>
       )}
 
       {/* 支出一覧 */}
       {group.expenses.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-base font-bold mb-3 pl-3 border-l-4 border-blue-500">支出一覧</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-bold pl-3 border-l-4 border-blue-500">みんなの立て替え</h2>
+            <span className="text-xs text-zinc-500">合計 {formatCurrency(totalExpenses)}</span>
+          </div>
           <div className="space-y-2">
             {group.expenses
               .sort((a, b) => b.date - a.date)
               .map((expense) => {
-                const payer = group.members.find(
-                  (m) => m.id === expense.paidBy
-                );
+                const payer = group.members.find((m) => m.id === expense.paidBy);
                 const isEditing = editingId === expense.id;
 
                 if (isEditing) {
                   return (
-                    <div
-                      key={expense.id}
-                      className="bg-zinc-900 rounded-2xl border-2 border-blue-500 p-5 space-y-3"
-                    >
+                    <div key={expense.id} className="bg-zinc-900 rounded-2xl border-2 border-blue-500 p-5 space-y-3">
                       <input
                         type="text"
                         value={editDesc}
@@ -694,9 +316,7 @@ export default function GroupPage() {
                         className="w-full px-4 py-2.5 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-zinc-500"
                       />
                       <div>
-                        <label className="block text-xs text-zinc-500 mb-1.5">
-                          日付（任意）
-                        </label>
+                        <label className="block text-xs text-zinc-500 mb-1.5">日付（任意）</label>
                         <input
                           type="date"
                           value={editExpenseDate}
@@ -705,9 +325,7 @@ export default function GroupPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-zinc-500 mb-1.5">
-                          誰が支払った？
-                        </label>
+                        <label className="block text-xs text-zinc-500 mb-1.5">誰が支払った？</label>
                         <select
                           value={editPaidBy}
                           onChange={(e) => setEditPaidBy(e.target.value)}
@@ -715,25 +333,19 @@ export default function GroupPage() {
                         >
                           <option value="">選択してください</option>
                           {group.members.map((member) => (
-                            <option key={member.id} value={member.id}>
-                              {member.name}
-                            </option>
+                            <option key={member.id} value={member.id}>{member.name}</option>
                           ))}
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs text-zinc-500 mb-1.5">
-                          支払い方法
-                        </label>
+                        <label className="block text-xs text-zinc-500 mb-1.5">支払い方法</label>
                         <select
                           value={editPaymentMethod}
                           onChange={(e) => setEditPaymentMethod(e.target.value as PaymentMethod)}
                           className="w-full px-4 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-zinc-800 appearance-none"
                         >
                           {PAYMENT_METHODS.map((method) => (
-                            <option key={method.value} value={method.value}>
-                              {method.label}
-                            </option>
+                            <option key={method.value} value={method.value}>{method.label}</option>
                           ))}
                         </select>
                       </div>
@@ -764,7 +376,7 @@ export default function GroupPage() {
                         </div>
                       </div>
 
-                      {/* 割引・調整（編集フォーム） */}
+                      {/* 割引・調整（編集） */}
                       {editSplitAmong.length > 0 && (
                         <div>
                           <button
@@ -806,7 +418,7 @@ export default function GroupPage() {
                                               setEditAdjustments((prev) =>
                                                 prev.map((a, i) =>
                                                   i === index
-                                                    ? { ...a, memberIds: a.memberIds.includes(member.id) ? a.memberIds.filter((id) => id !== member.id) : [...a.memberIds, member.id] }
+                                                    ? { ...a, memberIds: a.memberIds.includes(member.id) ? a.memberIds.filter((mid) => mid !== member.id) : [...a.memberIds, member.id] }
                                                     : a
                                                 )
                                               );
@@ -942,16 +554,14 @@ export default function GroupPage() {
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-medium text-sm truncate">
-                          {expense.description}
-                        </span>
+                        <span className="font-medium text-sm truncate">{expense.description}</span>
                         <svg className="w-3 h-3 text-zinc-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
                       </div>
                       <div className="text-xs text-zinc-500 mt-0.5">
                         {expense.expenseDate && `${expense.expenseDate} ・ `}
-                        {payer?.name || "不明"} が支払い ・{" "}
+                        {payer?.name || "不明"}が立て替え ・{" "}
                         {PAYMENT_METHODS.find((m) => m.value === expense.paymentMethod)?.label || "現金"}
                         {expense.adjustments && expense.adjustments.length > 0 && (
                           <span className="text-orange-400"> ・ 調整あり</span>
@@ -983,17 +593,125 @@ export default function GroupPage() {
         </section>
       )}
 
-      {/* 精算結果へのリンク */}
+      {/* 精算方法（同一ページ表示） */}
       {group.expenses.length > 0 && group.members.length >= 2 && (
-        <Link
-          href={`/group/${group.id}/settlements`}
-          className="block w-full text-center py-3 bg-blue-500 text-white rounded-xl font-medium active:bg-blue-600 mb-3"
-        >
-          精算結果をみる
-        </Link>
+        <section className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-bold pl-3 border-l-4 border-blue-500">精算方法</h2>
+            <button
+              onClick={handleCopySettlementText}
+              className="text-xs text-blue-400 active:text-blue-300"
+            >
+              {copiedText ? "✓ コピー済み" : "共有用にコピー"}
+            </button>
+          </div>
+
+          {allCompleted && (
+            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 mb-3 text-center">
+              <p className="text-emerald-400 font-medium text-sm">すべての精算が完了しました</p>
+            </div>
+          )}
+
+          {settlements.length === 0 ? (
+            <p className="text-zinc-500 text-sm py-4 text-center">精算の必要はありません</p>
+          ) : (
+            <div className="space-y-2">
+              {settlements.map((s, i) => {
+                const key = getSettlementKey(s.from, s.to);
+                const isCompleted = completedKeys.includes(key);
+                const receivingMethod = getMemberReceivingMethod(s.to);
+                return (
+                  <div
+                    key={i}
+                    className={`rounded-xl p-4 flex items-center gap-3 transition-colors ${
+                      isCompleted
+                        ? "bg-emerald-500/10 border border-emerald-500/30"
+                        : "bg-zinc-900 border border-zinc-800"
+                    }`}
+                  >
+                    <button
+                      onClick={() => toggleSettlementCompleted(key)}
+                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                        isCompleted
+                          ? "bg-emerald-500 border-emerald-500 text-white"
+                          : "border-zinc-600 text-transparent hover:border-zinc-500"
+                      }`}
+                    >
+                      <span className="text-xs">✓</span>
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <div className={`flex items-center gap-1.5 text-sm ${isCompleted ? "line-through opacity-60" : ""}`}>
+                        <span className="font-semibold">{getMemberName(s.from)}</span>
+                        <span className="text-zinc-500">→</span>
+                        <span className="font-semibold">{getMemberName(s.to)}</span>
+                      </div>
+                      {receivingMethod && (
+                        <span className="text-[11px] text-blue-400">{receivingMethod}で受取希望</span>
+                      )}
+                    </div>
+                    <span className={`font-bold text-sm ${isCompleted ? "line-through opacity-60" : ""}`}>
+                      {formatCurrency(s.amount)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* 明細・共有ボタン */}
+          {settlements.length > 0 && (
+            <div className="mt-4 space-y-2">
+              <Link
+                href={`/group/${group.id}/detail`}
+                className="block w-full text-center py-2.5 border border-zinc-800 text-zinc-400 rounded-xl font-medium text-sm active:bg-zinc-800"
+              >
+                明細を見る
+              </Link>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCopySettlementUrl}
+                  className="flex-1 py-2.5 bg-zinc-800 text-zinc-300 rounded-xl font-medium text-xs active:bg-zinc-700"
+                >
+                  {copiedUrl ? "✓ コピー済み" : "URLをコピー"}
+                </button>
+                <button
+                  onClick={handleLineShare}
+                  className="flex-1 py-2.5 bg-[#06C755] text-white rounded-xl font-medium text-xs active:opacity-80 flex items-center justify-center gap-1.5"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
+                  </svg>
+                  LINEで送る
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
       )}
 
-      {/* グループリセットボタン */}
+      {/* 端数処理 */}
+      {group.expenses.length > 0 && group.members.length >= 2 && (
+        <div className="mb-6">
+          <label className="block text-xs text-zinc-500 mb-2">端数処理</label>
+          <div className="flex rounded-xl overflow-hidden border border-zinc-800">
+            {ROUNDING_UNITS.map((unit) => (
+              <button
+                key={unit.value}
+                onClick={() => setRoundingUnit(unit.value)}
+                className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                  roundingUnit === unit.value
+                    ? "bg-blue-500 text-white"
+                    : "bg-zinc-900 text-zinc-400 active:bg-zinc-800"
+                }`}
+              >
+                {unit.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* リセットボタン */}
       {group.expenses.length > 0 && (
         <button
           onClick={() => {
@@ -1006,6 +724,10 @@ export default function GroupPage() {
           精算をリセット（メンバーを残す）
         </button>
       )}
+
+      <p className="mt-6 text-center text-xs text-zinc-600">
+        支払い回数を最小化して計算しています
+      </p>
     </div>
   );
 }
