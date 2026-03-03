@@ -271,20 +271,18 @@ export default function Home() {
         </div>
       ) : null}
 
-      {/* LP（初回ユーザーのみ表示） */}
-      {!loading && groups.length === 0 && (
-        <>
-          <div className="relative my-10">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-zinc-800" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="bg-[#09090b] px-3 text-xs text-zinc-600">Waroya とは</span>
-            </div>
-          </div>
-          <LandingContent />
-        </>
-      )}
+      {/* 区切り線 */}
+      <div className="relative my-10">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-zinc-800" />
+        </div>
+        <div className="relative flex justify-center">
+          <span className="bg-[#09090b] px-3 text-xs text-zinc-600">Waroya とは</span>
+        </div>
+      </div>
+
+      {/* LP */}
+      <LandingContent />
 
       {/* マウスドラッグ用グローバルイベント */}
       {dragging && (
