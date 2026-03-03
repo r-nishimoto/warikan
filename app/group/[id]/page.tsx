@@ -139,9 +139,9 @@ export default function GroupPage() {
       <div className="p-6 pb-8">
         <div className="h-4 w-16 bg-zinc-800 rounded animate-pulse mb-6" />
         <div className="h-7 w-48 bg-zinc-800 rounded animate-pulse mb-2" />
-        <div className="flex gap-1 mb-6">
+        <div className="flex flex-wrap gap-1.5 mb-6">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="w-6 h-6 rounded-full bg-zinc-800 animate-pulse" />
+            <div key={i} className="h-5 w-12 bg-zinc-800 rounded-md animate-pulse" />
           ))}
         </div>
         <div className="h-10 bg-zinc-800 rounded-lg animate-pulse mb-6" />
@@ -248,21 +248,15 @@ export default function GroupPage() {
             </svg>
           </Link>
         </div>
-        <div className="flex items-center gap-1 mt-1">
-          {group.members.slice(0, 6).map((member) => (
+        <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+          {group.members.map((member) => (
             <span
               key={member.id}
-              className="w-6 h-6 rounded-full bg-zinc-700 text-zinc-300 text-[11px] font-medium flex items-center justify-center"
-              title={member.name}
+              className="text-xs text-zinc-400 bg-zinc-800 rounded-md px-2 py-0.5"
             >
-              {member.name.charAt(0)}
+              {member.name}
             </span>
           ))}
-          {group.members.length > 6 && (
-            <span className="w-6 h-6 rounded-full bg-zinc-800 text-zinc-500 text-[10px] font-medium flex items-center justify-center">
-              +{group.members.length - 6}
-            </span>
-          )}
           {group.members.length === 0 && (
             <Link href={`/group/${group.id}/edit`} className="text-sm text-blue-400">
               メンバーを追加
@@ -311,7 +305,7 @@ export default function GroupPage() {
       {group.expenses.length > 0 && (
         <section className="mb-8">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-bold pl-3 border-l-4 border-blue-500">みんなの立て替え</h2>
+            <h2 className="text-base font-bold pl-3 border-l-4 border-blue-500">立替一覧</h2>
             <span className="text-xs text-zinc-500">合計 {formatCurrency(totalExpenses)}</span>
           </div>
           <div className="space-y-2">
@@ -644,11 +638,11 @@ export default function GroupPage() {
         </div>
       )}
 
-      {/* 精算方法（同一ページ表示） */}
+      {/* 清算結果（同一ページ表示） */}
       {group.expenses.length > 0 && group.members.length >= 2 && (
         <section className="mb-6">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-bold pl-3 border-l-4 border-blue-500">精算方法</h2>
+            <h2 className="text-base font-bold pl-3 border-l-4 border-blue-500">清算結果</h2>
             <button
               onClick={handleCopySettlementText}
               className="text-xs text-blue-400 active:text-blue-300"
