@@ -53,7 +53,7 @@ export interface Settlement {
 export type ReceivingMethod = "paypay" | "cash" | "bank" | "any";
 
 export const RECEIVING_METHODS: { value: ReceivingMethod; label: string }[] = [
-  { value: "any", label: "指定なし" },
+  { value: "any", label: "受取方法を選ぶ" },
   { value: "paypay", label: "PayPay" },
   { value: "cash", label: "現金" },
   { value: "bank", label: "振り込み" },
