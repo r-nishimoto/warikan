@@ -18,7 +18,10 @@ export default function AddExpensePage() {
   const [paidBy, setPaidBy] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [splitAmong, setSplitAmong] = useState<string[]>([]);
-  const [expenseDate, setExpenseDate] = useState("");
+  const [expenseDate, setExpenseDate] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  });
   const [descComposing, setDescComposing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -81,8 +84,17 @@ export default function AddExpensePage() {
 
   if (loading) {
     return (
-      <div className="p-6 text-center py-20">
-        <p className="text-zinc-500">読み込み中...</p>
+      <div className="p-6">
+        <div className="h-4 w-12 bg-zinc-800 rounded animate-pulse mb-6" />
+        <div className="h-6 w-40 bg-zinc-800 rounded animate-pulse mb-6" />
+        <div className="space-y-5">
+          {[1, 2, 3].map((i) => (
+            <div key={i}>
+              <div className="h-3 w-20 bg-zinc-800 rounded animate-pulse mb-2" />
+              <div className="h-12 bg-zinc-800 rounded-xl animate-pulse" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

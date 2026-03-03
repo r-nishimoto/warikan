@@ -163,8 +163,18 @@ export default function Home() {
 
       {/* グループ一覧 */}
       {loading ? (
-        <div className="text-center py-8">
-          <p className="text-zinc-500 text-sm">読み込み中...</p>
+        <div className="space-y-2">
+          <div className="h-4 w-28 bg-zinc-800 rounded animate-pulse mb-3" />
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-zinc-900 rounded-xl border border-zinc-800 p-4">
+              <div className="h-4 w-32 bg-zinc-800 rounded animate-pulse mb-2" />
+              <div className="flex gap-1">
+                {[1, 2, 3].map((j) => (
+                  <div key={j} className="w-5 h-5 rounded-full bg-zinc-800 animate-pulse" />
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       ) : groups.length > 0 ? (
         <div className="mb-8">
@@ -214,7 +224,7 @@ export default function Home() {
                         <div className="min-w-0 flex-1">
                           <div className="text-base font-bold truncate">{group.name}</div>
                           <div className="flex items-center gap-1 mt-0.5">
-                            {group.members.map((member) => (
+                            {group.members.slice(0, 5).map((member) => (
                               <span
                                 key={member.id}
                                 className="w-5 h-5 rounded-full bg-zinc-700 text-zinc-300 text-[10px] font-medium flex items-center justify-center"
@@ -223,6 +233,11 @@ export default function Home() {
                                 {member.name.charAt(0)}
                               </span>
                             ))}
+                            {group.members.length > 5 && (
+                              <span className="w-5 h-5 rounded-full bg-zinc-800 text-zinc-500 text-[9px] font-medium flex items-center justify-center">
+                                +{group.members.length - 5}
+                              </span>
+                            )}
                           </div>
                         </div>
                         <div className="text-right flex-shrink-0 ml-3">
@@ -241,9 +256,12 @@ export default function Home() {
                           deleteGroup(group.id);
                         }
                       }}
-                      className="ml-2 px-2 py-1 text-xs text-zinc-600 hover:text-rose-400 active:text-rose-400 flex-shrink-0"
+                      aria-label={`${group.name}を削除`}
+                      className="ml-1 w-10 h-10 flex items-center justify-center text-zinc-600 hover:text-rose-400 active:text-rose-400 flex-shrink-0 rounded-lg"
                     >
-                      ×
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                      </svg>
                     </button>
                   </div>
                 </div>
@@ -253,18 +271,20 @@ export default function Home() {
         </div>
       ) : null}
 
-      {/* 区切り線 */}
-      <div className="relative my-10">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-zinc-800" />
-        </div>
-        <div className="relative flex justify-center">
-          <span className="bg-[#09090b] px-3 text-xs text-zinc-600">Waroya とは</span>
-        </div>
-      </div>
-
-      {/* LP */}
-      <LandingContent />
+      {/* LP（初回ユーザーのみ表示） */}
+      {!loading && groups.length === 0 && (
+        <>
+          <div className="relative my-10">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-zinc-800" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-[#09090b] px-3 text-xs text-zinc-600">Waroya とは</span>
+            </div>
+          </div>
+          <LandingContent />
+        </>
+      )}
 
       {/* マウスドラッグ用グローバルイベント */}
       {dragging && (

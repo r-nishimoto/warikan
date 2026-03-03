@@ -136,8 +136,24 @@ export default function GroupPage() {
 
   if (loading) {
     return (
-      <div className="p-6 text-center py-20">
-        <p className="text-zinc-500">読み込み中...</p>
+      <div className="p-6 pb-8">
+        <div className="h-4 w-16 bg-zinc-800 rounded animate-pulse mb-6" />
+        <div className="h-7 w-48 bg-zinc-800 rounded animate-pulse mb-2" />
+        <div className="flex gap-1 mb-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="w-6 h-6 rounded-full bg-zinc-800 animate-pulse" />
+          ))}
+        </div>
+        <div className="h-10 bg-zinc-800 rounded-lg animate-pulse mb-6" />
+        <div className="h-12 bg-zinc-800 rounded-xl animate-pulse mb-6" />
+        <div className="space-y-2">
+          {[1, 2].map((i) => (
+            <div key={i} className="bg-zinc-900 rounded-xl border border-zinc-800 p-4">
+              <div className="h-4 w-40 bg-zinc-800 rounded animate-pulse mb-2" />
+              <div className="h-3 w-56 bg-zinc-800/60 rounded animate-pulse" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -232,7 +248,7 @@ export default function GroupPage() {
           </Link>
         </div>
         <div className="flex items-center gap-1 mt-1">
-          {group.members.map((member) => (
+          {group.members.slice(0, 6).map((member) => (
             <span
               key={member.id}
               className="w-6 h-6 rounded-full bg-zinc-700 text-zinc-300 text-[11px] font-medium flex items-center justify-center"
@@ -241,6 +257,11 @@ export default function GroupPage() {
               {member.name.charAt(0)}
             </span>
           ))}
+          {group.members.length > 6 && (
+            <span className="w-6 h-6 rounded-full bg-zinc-800 text-zinc-500 text-[10px] font-medium flex items-center justify-center">
+              +{group.members.length - 6}
+            </span>
+          )}
           {group.members.length === 0 && (
             <Link href={`/group/${group.id}/edit`} className="text-sm text-blue-400">
               メンバーを追加
@@ -276,6 +297,19 @@ export default function GroupPage() {
         >
           立て替えを追加
         </Link>
+      )}
+
+      {/* 空状態ガイド */}
+      {group.expenses.length === 0 && group.members.length >= 2 && (
+        <div className="text-center py-10 mb-6">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-zinc-900 border border-zinc-800 mb-4">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-500">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+          </div>
+          <p className="text-zinc-400 font-medium text-sm mb-1">まだ立て替えがありません</p>
+          <p className="text-zinc-600 text-xs">上のボタンから最初の立て替えを追加しましょう</p>
+        </div>
       )}
 
       {/* 支出一覧 */}
@@ -593,6 +627,28 @@ export default function GroupPage() {
         </section>
       )}
 
+      {/* 端数処理（精算の上に配置） */}
+      {group.expenses.length > 0 && group.members.length >= 2 && (
+        <div className="mb-4">
+          <label className="block text-xs text-zinc-500 mb-2">端数処理</label>
+          <div className="flex rounded-xl overflow-hidden border border-zinc-800">
+            {ROUNDING_UNITS.map((unit) => (
+              <button
+                key={unit.value}
+                onClick={() => setRoundingUnit(unit.value)}
+                className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                  roundingUnit === unit.value
+                    ? "bg-blue-500 text-white"
+                    : "bg-zinc-900 text-zinc-400 active:bg-zinc-800"
+                }`}
+              >
+                {unit.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* 精算方法（同一ページ表示） */}
       {group.expenses.length > 0 && group.members.length >= 2 && (
         <section className="mb-6">
@@ -687,28 +743,6 @@ export default function GroupPage() {
             </div>
           )}
         </section>
-      )}
-
-      {/* 端数処理 */}
-      {group.expenses.length > 0 && group.members.length >= 2 && (
-        <div className="mb-6">
-          <label className="block text-xs text-zinc-500 mb-2">端数処理</label>
-          <div className="flex rounded-xl overflow-hidden border border-zinc-800">
-            {ROUNDING_UNITS.map((unit) => (
-              <button
-                key={unit.value}
-                onClick={() => setRoundingUnit(unit.value)}
-                className={`flex-1 py-2 text-sm font-medium transition-colors ${
-                  roundingUnit === unit.value
-                    ? "bg-blue-500 text-white"
-                    : "bg-zinc-900 text-zinc-400 active:bg-zinc-800"
-                }`}
-              >
-                {unit.label}
-              </button>
-            ))}
-          </div>
-        </div>
       )}
 
       {/* リセットボタン */}
