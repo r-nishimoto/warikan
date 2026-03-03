@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useGroup } from "@/lib/useGroup";
 import { calculateSettlements } from "@/lib/settlement";
 import { formatCurrency } from "@/lib/utils";
-import { RoundingUnit, ROUNDING_UNITS, RECEIVING_METHODS } from "@/lib/types";
+import { RoundingUnit, getRoundingUnits, RECEIVING_METHODS } from "@/lib/types";
 
 export default function SettlementsPage() {
   const { id } = useParams<{ id: string }>();
@@ -63,7 +63,7 @@ export default function SettlementsPage() {
       const receivingMethod = getMemberReceivingMethod(s.to);
       const methodSuffix = receivingMethod ? `（${receivingMethod}で）` : "";
       lines.push(
-        `${done ? "✅ " : ""}${getMemberName(s.from)} → ${getMemberName(s.to)}：${formatCurrency(s.amount)}${methodSuffix}`
+        `${done ? "✅ " : ""}${getMemberName(s.from)} → ${getMemberName(s.to)}：${formatCurrency(s.amount, group.currency)}${methodSuffix}`
       );
     });
     return lines.join("\n");
@@ -152,7 +152,7 @@ export default function SettlementsPage() {
                     )}
                   </div>
                   <div className={`text-lg font-bold ${isCompleted ? "line-through opacity-60" : ""}`}>
-                    {formatCurrency(s.amount)}
+                    {formatCurrency(s.amount, group.currency)}
                   </div>
                 </div>
               );
@@ -191,7 +191,7 @@ export default function SettlementsPage() {
       <div className="mt-6">
         <label className="block text-xs text-zinc-500 mb-2">端数処理</label>
         <div className="flex rounded-xl overflow-hidden border border-zinc-800">
-          {ROUNDING_UNITS.map((unit) => (
+          {getRoundingUnits(group.currency).map((unit) => (
             <button
               key={unit.value}
               onClick={() => setRoundingUnit(unit.value)}

@@ -58,6 +58,7 @@ export function useGroups() {
           expenseDate: e.expense_date || undefined,
           date: e.date,
           adjustments: e.adjustments || undefined,
+          splitConfig: e.split_config || undefined,
         })),
       completedSettlements: [],
       createdAt: g.created_at,
@@ -80,13 +81,13 @@ export function useGroups() {
     fetchGroups();
   }, [fetchGroups]);
 
-  const addGroup = useCallback(async (name: string, memberNames?: string[]): Promise<Group> => {
+  const addGroup = useCallback(async (name: string, memberNames?: string[], currency: string = "JPY"): Promise<Group> => {
     const groupId = nanoid(8);
     const now = Date.now();
     const { error } = await supabase.from("groups").insert({
       id: groupId,
       name,
-      currency: "JPY",
+      currency,
       created_at: now,
       updated_at: now,
     });
@@ -116,7 +117,7 @@ export function useGroups() {
     const newGroup: Group = {
       id: groupId,
       name,
-      currency: "JPY",
+      currency,
       members: members.map((m) => ({ id: m.id, name: m.name })),
       expenses: [],
       completedSettlements: [],

@@ -242,7 +242,7 @@ export default function Home() {
                         </div>
                         <div className="text-right flex-shrink-0 ml-3">
                           <div className="text-sm font-semibold">
-                            {formatCurrency(group.expenses.reduce((sum, e) => sum + e.amount, 0))}
+                            {formatCurrency(group.expenses.reduce((sum, e) => sum + e.amount, 0), group.currency)}
                           </div>
                           <div className="text-[11px] text-zinc-500">
                             {group.expenses.length}件
