@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "./supabase";
-import { Group, Member, Expense, ReceivingMethod, PaymentMethod } from "./types";
+import { Group, Member, Expense, ReceivingMethod, PaymentMethod, parseReceivingMethod, encodeReceivingMethod } from "./types";
 import { nanoid } from "nanoid";
 
 // ローカルのグループIDレジストリ管理
@@ -46,11 +46,15 @@ function assembleGroup(
     id: groupRow.id,
     name: groupRow.name,
     currency: groupRow.currency,
-    members: memberRows.map((m) => ({
-      id: m.id,
-      name: m.name,
-      preferredReceivingMethod: (m.preferred_receiving_method as ReceivingMethod) || undefined,
-    })),
+    members: memberRows.map((m) => {
+      const parsed = parseReceivingMethod(m.preferred_receiving_method);
+      return {
+        id: m.id,
+        name: m.name,
+        preferredReceivingMethod: parsed.method || undefined,
+        customReceivingMethod: parsed.custom,
+      };
+    }),
     expenses: expenseRows.map((e) => ({
       id: e.id,
       description: e.description,
@@ -230,8 +234,9 @@ export function useGroup(groupId: string) {
     await touchGroup();
   }, [groupId, touchGroup]);
 
-  const updateMemberPreference = useCallback(async (memberId: string, method: ReceivingMethod) => {
-    await supabase.from("members").update({ preferred_receiving_method: method }).eq("id", memberId);
+  const updateMemberPreference = useCallback(async (memberId: string, method: ReceivingMethod, customText?: string) => {
+    const encoded = encodeReceivingMethod(method, customText);
+    await supabase.from("members").update({ preferred_receiving_method: encoded }).eq("id", memberId);
     await touchGroup();
   }, [touchGroup]);
 

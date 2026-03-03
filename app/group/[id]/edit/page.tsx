@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useGroup } from "@/lib/useGroup";
@@ -154,36 +154,66 @@ export default function EditGroupPage() {
             <p className="text-zinc-600 text-sm py-4 text-center">メンバーを追加してください</p>
           ) : (
             <div className="space-y-2">
-              {group.members.map((member) => (
-                <div
-                  key={member.id}
-                  className="flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3"
-                >
-                  <span className="w-7 h-7 rounded-full bg-zinc-700 text-zinc-300 text-xs font-medium flex items-center justify-center flex-shrink-0">
-                    {member.name.charAt(0)}
-                  </span>
-                  <span className="flex-1 font-medium text-sm">{member.name}</span>
-                  <select
-                    value={member.preferredReceivingMethod || "any"}
-                    onChange={(e) => updateMemberPreference(member.id, e.target.value as ReceivingMethod)}
-                    className="text-xs bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-zinc-400"
+              {group.members.map((member) => {
+                const isOther = member.preferredReceivingMethod === "other";
+                return (
+                  <div
+                    key={member.id}
+                    className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3"
                   >
-                    {RECEIVING_METHODS.map((rm) => (
-                      <option key={rm.value} value={rm.value}>{rm.label}</option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={() => {
-                      if (window.confirm(`「${member.name}」を削除しますか？\n関連する支出データも影響を受けます。`)) {
-                        removeMember(member.id);
-                      }
-                    }}
-                    className="text-zinc-600 hover:text-rose-400 text-lg"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
+                    <div className="flex items-center gap-3">
+                      <span className="w-7 h-7 rounded-full bg-zinc-700 text-zinc-300 text-xs font-medium flex items-center justify-center flex-shrink-0">
+                        {member.name.charAt(0)}
+                      </span>
+                      <span className="flex-1 font-medium text-sm">{member.name}</span>
+                      <select
+                        value={member.preferredReceivingMethod || "any"}
+                        onChange={(e) => {
+                          const val = e.target.value as ReceivingMethod;
+                          if (val === "other") {
+                            updateMemberPreference(member.id, val, member.customReceivingMethod || "");
+                          } else {
+                            updateMemberPreference(member.id, val);
+                          }
+                        }}
+                        className="text-xs bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-zinc-400"
+                      >
+                        {RECEIVING_METHODS.map((rm) => (
+                          <option key={rm.value} value={rm.value}>{rm.label}</option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={() => {
+                          if (window.confirm(`「${member.name}」を削除しますか？\n関連する支出データも影響を受けます。`)) {
+                            removeMember(member.id);
+                          }
+                        }}
+                        className="text-zinc-600 hover:text-rose-400 text-lg"
+                      >
+                        ×
+                      </button>
+                    </div>
+                    {isOther && (
+                      <div className="mt-2 ml-10">
+                        <input
+                          type="text"
+                          defaultValue={member.customReceivingMethod || ""}
+                          placeholder="例: PayPayのID、口座情報など"
+                          onBlur={(e) => {
+                            updateMemberPreference(member.id, "other", e.target.value);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              (e.target as HTMLInputElement).blur();
+                            }
+                          }}
+                          className="w-full px-3 py-2 text-xs bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-zinc-600"
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

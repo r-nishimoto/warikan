@@ -183,6 +183,7 @@ export default function GroupPage() {
     const member = group.members.find((m) => m.id === memberId);
     const method = member?.preferredReceivingMethod;
     if (!method || method === "any") return null;
+    if (method === "other") return member?.customReceivingMethod || "その他";
     return RECEIVING_METHODS.find((m) => m.value === method)?.label || null;
   };
   const getSettlementKey = (from: string, to: string) => `${from}->${to}`;

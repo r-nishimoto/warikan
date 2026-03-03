@@ -5,7 +5,7 @@ interface MinimalGroup {
   i: string;
   n: string;
   c: string;
-  m: Array<{ i: string; n: string; rm?: string }>;
+  m: Array<{ i: string; n: string; rm?: string; cr?: string }>;
   e: Array<{
     i: string;
     d: string;
@@ -25,7 +25,7 @@ export function encodeGroupForSharing(group: Group): string {
     i: group.id,
     n: group.name,
     c: group.currency,
-    m: group.members.map((m) => ({ i: m.id, n: m.name, rm: m.preferredReceivingMethod })),
+    m: group.members.map((m) => ({ i: m.id, n: m.name, rm: m.preferredReceivingMethod, cr: m.customReceivingMethod })),
     e: group.expenses.map((e) => ({
       i: e.id,
       d: e.description,
@@ -55,7 +55,7 @@ export function decodeGroupFromSharing(encoded: string): Group | null {
       id: minimal.i,
       name: minimal.n,
       currency: minimal.c,
-      members: minimal.m.map((m) => ({ id: m.i, name: m.n, preferredReceivingMethod: (m.rm as "paypay" | "cash" | "bank" | "any") || undefined })),
+      members: minimal.m.map((m) => ({ id: m.i, name: m.n, preferredReceivingMethod: (m.rm as "paypay" | "cash" | "bank" | "any" | "other") || undefined, customReceivingMethod: m.cr })),
       expenses: minimal.e.map((e) => ({
         id: e.i,
         description: e.d,

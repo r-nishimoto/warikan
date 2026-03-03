@@ -18,7 +18,7 @@ interface WarikanStore {
   importGroup: (group: Group) => void;
   toggleSettlementCompleted: (groupId: string, key: string) => void;
   resetGroupExpenses: (groupId: string) => void;
-  updateMemberPreference: (groupId: string, memberId: string, method: ReceivingMethod) => void;
+  updateMemberPreference: (groupId: string, memberId: string, method: ReceivingMethod, customText?: string) => void;
   updateGroupName: (groupId: string, name: string) => void;
 }
 
@@ -159,7 +159,7 @@ export const useStore = create<WarikanStore>()(
         }));
       },
 
-      updateMemberPreference: (groupId: string, memberId: string, method: ReceivingMethod) => {
+      updateMemberPreference: (groupId: string, memberId: string, method: ReceivingMethod, customText?: string) => {
         set((state) => ({
           groups: state.groups.map((g) =>
             g.id === groupId
@@ -167,7 +167,7 @@ export const useStore = create<WarikanStore>()(
                   ...g,
                   members: g.members.map((m) =>
                     m.id === memberId
-                      ? { ...m, preferredReceivingMethod: method }
+                      ? { ...m, preferredReceivingMethod: method, customReceivingMethod: method === "other" ? customText : undefined }
                       : m
                   ),
                   updatedAt: Date.now(),

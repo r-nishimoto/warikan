@@ -13,6 +13,7 @@ export interface Member {
   id: string;
   name: string;
   preferredReceivingMethod?: ReceivingMethod;
+  customReceivingMethod?: string; // "other" 選択時の自由入力テキスト
 }
 
 export type PaymentMethod = "cash" | "card" | "paypay" | "quickpay" | "other";
@@ -50,14 +51,33 @@ export interface Settlement {
 }
 
 // 希望精算方法（受け取り側）
-export type ReceivingMethod = "paypay" | "cash" | "bank" | "any";
+export type ReceivingMethod = "paypay" | "cash" | "bank" | "any" | "other";
 
 export const RECEIVING_METHODS: { value: ReceivingMethod; label: string }[] = [
   { value: "any", label: "受取方法を選ぶ" },
   { value: "paypay", label: "PayPay" },
   { value: "cash", label: "現金" },
   { value: "bank", label: "振り込み" },
+  { value: "other", label: "その他（自由入力）" },
 ];
+
+// DB保存時のプレフィックス（"other:自由テキスト" 形式で1カラムに格納）
+export const OTHER_PREFIX = "other:";
+
+export function parseReceivingMethod(raw: string | null): { method: ReceivingMethod; custom?: string } {
+  if (!raw || raw === "any") return { method: "any" };
+  if (raw.startsWith(OTHER_PREFIX)) {
+    return { method: "other", custom: raw.slice(OTHER_PREFIX.length) };
+  }
+  return { method: raw as ReceivingMethod };
+}
+
+export function encodeReceivingMethod(method: ReceivingMethod, custom?: string): string {
+  if (method === "other" && custom?.trim()) {
+    return OTHER_PREFIX + custom.trim();
+  }
+  return method;
+}
 
 // 端数処理
 export type RoundingUnit = 1 | 10 | 100 | 1000;
