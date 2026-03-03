@@ -161,16 +161,13 @@ export default function Home() {
         はじめる
       </Link>
 
-      {/* LP */}
-      <LandingContent />
-
       {/* グループ一覧 */}
       {loading ? (
         <div className="text-center py-8">
           <p className="text-zinc-500 text-sm">読み込み中...</p>
         </div>
       ) : groups.length > 0 ? (
-        <div>
+        <div className="mb-8">
           <h2 className="text-sm font-medium text-zinc-400 mb-3">最近のグループ</h2>
           <div ref={listRef} className="flex flex-col gap-2">
             {groups.map((group) => {
@@ -255,6 +252,19 @@ export default function Home() {
           </div>
         </div>
       ) : null}
+
+      {/* 区切り線 */}
+      <div className="relative my-10">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-zinc-800" />
+        </div>
+        <div className="relative flex justify-center">
+          <span className="bg-[#09090b] px-3 text-xs text-zinc-600">Waroya とは</span>
+        </div>
+      </div>
+
+      {/* LP */}
+      <LandingContent />
 
       {/* マウスドラッグ用グローバルイベント */}
       {dragging && (
