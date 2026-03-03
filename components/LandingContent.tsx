@@ -152,7 +152,7 @@ export function LandingContent() {
       {/* ── こんな時に ── */}
       <section className="text-center">
         <h3 className="text-lg font-bold mb-4">
-          旅行以外にも様々なシーンで活躍
+          割り勘をするさまざまなシーンで活躍
         </h3>
         <div className="flex flex-wrap justify-center gap-2">
           {useCases.map((tag) => (
