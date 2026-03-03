@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useGroup } from "@/lib/useGroup";
 import { formatCurrency, formatNumberWithCommas, removeCommas } from "@/lib/utils";
-import { Adjustment, Expense, PaymentMethod, PAYMENT_METHODS, RECEIVING_METHODS, RoundingUnit, getRoundingUnits, getCurrencySymbol, SplitMode, SplitConfig } from "@/lib/types";
+import { Adjustment, Expense, PaymentMethod, PAYMENT_METHODS, RECEIVING_METHODS, RoundingUnit, ROUNDING_UNITS } from "@/lib/types";
 import { calculateMemberShares, calculateSettlements } from "@/lib/settlement";
 
 export default function GroupPage() {
@@ -38,11 +38,6 @@ export default function GroupPage() {
   const [editExpenseDate, setEditExpenseDate] = useState("");
   const [editDescComposing, setEditDescComposing] = useState(false);
 
-  // 割り勘方法（Edit form）
-  const [editSplitMode, setEditSplitMode] = useState<SplitMode>("equal");
-  const [editRatios, setEditRatios] = useState<Record<string, string>>({});
-  const [editFixedAmounts, setEditFixedAmounts] = useState<Record<string, string>>({});
-
   // 調整（Edit form）
   type AdjustmentInput = { memberIds: string[]; amount: string; memo: string };
   const [editAdjustments, setEditAdjustments] = useState<AdjustmentInput[]>([]);
@@ -64,19 +59,6 @@ export default function GroupPage() {
       })) || []
     );
     setShowEditAdjustments((expense.adjustments?.length || 0) > 0);
-    // 割り勘方法の復元
-    const sc = expense.splitConfig;
-    setEditSplitMode(sc?.mode || "equal");
-    setEditRatios(
-      sc?.ratios
-        ? Object.fromEntries(Object.entries(sc.ratios).map(([k, v]) => [k, String(v)]))
-        : {}
-    );
-    setEditFixedAmounts(
-      sc?.fixedAmounts
-        ? Object.fromEntries(Object.entries(sc.fixedAmounts).map(([k, v]) => [k, String(v)]))
-        : {}
-    );
   };
 
   const cancelEditing = () => setEditingId(null);
@@ -96,16 +78,6 @@ export default function GroupPage() {
     if (!group || !editingId) return;
     const numAmount = parseInt(editAmount, 10);
     if (!editDesc.trim() || !numAmount || !editPaidBy || editSplitAmong.length === 0) return;
-    let splitConfig: SplitConfig | undefined;
-    if (editSplitMode === "ratio") {
-      const r: Record<string, number> = {};
-      editSplitAmong.forEach((id) => { r[id] = parseInt(editRatios[id] || "1", 10) || 1; });
-      splitConfig = { mode: "ratio", ratios: r };
-    } else if (editSplitMode === "fixed") {
-      const f: Record<string, number> = {};
-      editSplitAmong.forEach((id) => { f[id] = parseInt(editFixedAmounts[id] || "0", 10) || 0; });
-      splitConfig = { mode: "fixed", fixedAmounts: f };
-    }
     await updateExpense(editingId, {
       description: editDesc.trim(),
       amount: numAmount,
@@ -115,10 +87,9 @@ export default function GroupPage() {
       expenseDate: editExpenseDate || undefined,
       date: Date.now(),
       adjustments: parseAdjustments(editAdjustments),
-      splitConfig,
     });
     setEditingId(null);
-  }, [group, editingId, editDesc, editAmount, editPaidBy, editPaymentMethod, editSplitAmong, editExpenseDate, editAdjustments, editSplitMode, editRatios, editFixedAmounts, updateExpense]);
+  }, [group, editingId, editDesc, editAmount, editPaidBy, editPaymentMethod, editSplitAmong, editExpenseDate, editAdjustments, updateExpense]);
 
   const toggleEditSplitMember = (memberId: string) => {
     setEditSplitAmong((prev) => {
@@ -232,7 +203,7 @@ export default function GroupPage() {
       const receivingMethod = getMemberReceivingMethod(s.to);
       const methodSuffix = receivingMethod ? `（${receivingMethod}で）` : "";
       lines.push(
-        `${done ? "✅ " : ""}${getMemberName(s.from)} → ${getMemberName(s.to)}：${formatCurrency(s.amount, group.currency)}${methodSuffix}`
+        `${done ? "✅ " : ""}${getMemberName(s.from)} → ${getMemberName(s.to)}：${formatCurrency(s.amount)}${methodSuffix}`
       );
     });
     return lines.join("\n");
@@ -335,7 +306,7 @@ export default function GroupPage() {
         <section className="mb-8">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-bold pl-3 border-l-4 border-blue-500">立替一覧</h2>
-            <span className="text-xs text-zinc-500">合計 {formatCurrency(totalExpenses, group.currency)}</span>
+            <span className="text-xs text-zinc-500">合計 {formatCurrency(totalExpenses)}</span>
           </div>
           <div className="space-y-2">
             {group.expenses
@@ -364,7 +335,7 @@ export default function GroupPage() {
                           const v = removeCommas(e.target.value).replace(/[^0-9]/g, "");
                           setEditAmount(v);
                         }}
-                        placeholder={`金額（${getCurrencySymbol(group.currency)}）`}
+                        placeholder="金額（円）"
                         className="w-full px-4 py-2.5 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-zinc-500"
                       />
                       <div>
@@ -427,124 +398,6 @@ export default function GroupPage() {
                           ))}
                         </div>
                       </div>
-
-                      {/* 割り勘方法（編集） */}
-                      {editSplitAmong.length > 0 && (
-                        <div>
-                          <label className="block text-xs text-zinc-500 mb-1.5">割り勘方法</label>
-                          <div className="flex rounded-xl overflow-hidden border border-zinc-800">
-                            {([
-                              { value: "equal" as SplitMode, label: "均等" },
-                              { value: "ratio" as SplitMode, label: "比率" },
-                              { value: "fixed" as SplitMode, label: "金額指定" },
-                            ]).map((mode) => (
-                              <button
-                                key={mode.value}
-                                onClick={() => setEditSplitMode(mode.value)}
-                                className={`flex-1 py-2 text-sm font-medium transition-colors ${
-                                  editSplitMode === mode.value
-                                    ? "bg-blue-500 text-white"
-                                    : "bg-zinc-900 text-zinc-400 active:bg-zinc-800"
-                                }`}
-                              >
-                                {mode.label}
-                              </button>
-                            ))}
-                          </div>
-
-                          {/* 比率入力 */}
-                          {editSplitMode === "ratio" && (
-                            <div className="mt-3 space-y-2">
-                              <p className="text-xs text-zinc-500">各メンバーの比率を入力</p>
-                              {editSplitAmong.map((memberId) => {
-                                const member = group.members.find((m) => m.id === memberId);
-                                return (
-                                  <div key={memberId} className="flex items-center gap-3">
-                                    <span className="text-sm text-zinc-300 w-20 truncate">{member?.name}</span>
-                                    <input
-                                      type="text"
-                                      inputMode="numeric"
-                                      value={editRatios[memberId] || "1"}
-                                      onChange={(e) => {
-                                        const v = e.target.value.replace(/[^0-9]/g, "");
-                                        setEditRatios((prev) => ({ ...prev, [memberId]: v }));
-                                      }}
-                                      className="flex-1 px-3 py-2 border border-zinc-700 bg-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-center"
-                                    />
-                                  </div>
-                                );
-                              })}
-                              {parseInt(editAmount, 10) > 0 && (
-                                <div className="bg-zinc-800/30 rounded-xl p-3 mt-2">
-                                  <p className="text-xs text-zinc-500 mb-2">1人あたり金額（目安）</p>
-                                  <div className="space-y-1">
-                                    {(() => {
-                                      const numAmount = parseInt(editAmount, 10);
-                                      const totalRatio = editSplitAmong.reduce((sum, mid) => sum + (parseInt(editRatios[mid] || "1", 10) || 1), 0);
-                                      return editSplitAmong.map((memberId) => {
-                                        const member = group.members.find((m) => m.id === memberId);
-                                        const ratio = parseInt(editRatios[memberId] || "1", 10) || 1;
-                                        const memberShare = Math.round(numAmount * ratio / totalRatio);
-                                        return (
-                                          <div key={memberId} className="flex justify-between text-xs">
-                                            <span className="text-zinc-400">{member?.name} ({ratio})</span>
-                                            <span className="text-zinc-300">{formatCurrency(memberShare, group.currency)}</span>
-                                          </div>
-                                        );
-                                      });
-                                    })()}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          {/* 金額指定入力 */}
-                          {editSplitMode === "fixed" && (
-                            <div className="mt-3 space-y-2">
-                              <p className="text-xs text-zinc-500">各メンバーの負担額を入力</p>
-                              {editSplitAmong.map((memberId) => {
-                                const member = group.members.find((m) => m.id === memberId);
-                                return (
-                                  <div key={memberId} className="flex items-center gap-3">
-                                    <span className="text-sm text-zinc-300 w-20 truncate">{member?.name}</span>
-                                    <input
-                                      type="text"
-                                      inputMode="numeric"
-                                      value={formatNumberWithCommas(editFixedAmounts[memberId] || "")}
-                                      onChange={(e) => {
-                                        const v = removeCommas(e.target.value).replace(/[^0-9]/g, "");
-                                        setEditFixedAmounts((prev) => ({ ...prev, [memberId]: v }));
-                                      }}
-                                      placeholder="0"
-                                      className="flex-1 px-3 py-2 border border-zinc-700 bg-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-right"
-                                    />
-                                    <span className="text-zinc-500 text-xs">{getCurrencySymbol(group.currency)}</span>
-                                  </div>
-                                );
-                              })}
-                              {parseInt(editAmount, 10) > 0 && (
-                                <div className={`text-xs mt-1 ${
-                                  (() => {
-                                    const total = editSplitAmong.reduce((sum, mid) => sum + (parseInt(editFixedAmounts[mid] || "0", 10) || 0), 0);
-                                    const numAmount = parseInt(editAmount, 10);
-                                    return total === numAmount ? "text-emerald-400" : total > numAmount ? "text-rose-400" : "text-zinc-500";
-                                  })()
-                                }`}>
-                                  {(() => {
-                                    const total = editSplitAmong.reduce((sum, mid) => sum + (parseInt(editFixedAmounts[mid] || "0", 10) || 0), 0);
-                                    const numAmount = parseInt(editAmount, 10);
-                                    const diff = numAmount - total;
-                                    if (diff === 0) return "合計が一致しています";
-                                    if (diff > 0) return `残り ${formatCurrency(diff, group.currency)}`;
-                                    return `${formatCurrency(-diff, group.currency)} 超過しています`;
-                                  })()}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
 
                       {/* 割引・調整（編集） */}
                       {editSplitAmong.length > 0 && (
@@ -619,7 +472,7 @@ export default function GroupPage() {
                                         placeholder="1000"
                                         className="flex-1 px-3 py-2 border border-zinc-700 bg-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-zinc-600"
                                       />
-                                      <span className="text-zinc-500 text-sm">{getCurrencySymbol(group.currency)}</span>
+                                      <span className="text-zinc-500 text-sm">円</span>
                                     </div>
                                   </div>
                                   <div>
@@ -650,16 +503,6 @@ export default function GroupPage() {
                                     <p className="text-xs text-zinc-500 mb-2">調整後の1人あたり金額（目安）</p>
                                     <div className="space-y-1">
                                       {(() => {
-                                        let previewSplitConfig: SplitConfig | undefined;
-                                        if (editSplitMode === "ratio") {
-                                          const r: Record<string, number> = {};
-                                          editSplitAmong.forEach((mid) => { r[mid] = parseInt(editRatios[mid] || "1", 10) || 1; });
-                                          previewSplitConfig = { mode: "ratio", ratios: r };
-                                        } else if (editSplitMode === "fixed") {
-                                          const f: Record<string, number> = {};
-                                          editSplitAmong.forEach((mid) => { f[mid] = parseInt(editFixedAmounts[mid] || "0", 10) || 0; });
-                                          previewSplitConfig = { mode: "fixed", fixedAmounts: f };
-                                        }
                                         const tempExpense: Expense = {
                                           id: "preview",
                                           description: "",
@@ -669,7 +512,6 @@ export default function GroupPage() {
                                           splitAmong: editSplitAmong,
                                           date: 0,
                                           adjustments: parseAdjustments(editAdjustments),
-                                          splitConfig: previewSplitConfig,
                                         };
                                         const shares = calculateMemberShares(tempExpense);
                                         return editSplitAmong.map((memberId) => {
@@ -681,8 +523,8 @@ export default function GroupPage() {
                                             <div key={memberId} className="flex justify-between text-xs">
                                               <span className="text-zinc-400">{member?.name}</span>
                                               <span className={diff !== 0 ? "text-orange-400" : "text-zinc-300"}>
-                                                {formatCurrency(share, group.currency)}
-                                                {diff !== 0 && ` (${diff > 0 ? "+" : ""}${formatCurrency(diff, group.currency)})`}
+                                                {formatCurrency(share)}
+                                                {diff !== 0 && ` (${diff > 0 ? "+" : ""}${formatCurrency(diff)})`}
                                               </span>
                                             </div>
                                           );
@@ -744,12 +586,6 @@ export default function GroupPage() {
                         {expense.expenseDate && `${expense.expenseDate} ・ `}
                         {payer?.name || "不明"}が立て替え ・{" "}
                         {PAYMENT_METHODS.find((m) => m.value === expense.paymentMethod)?.label || "現金"}
-                        {expense.splitConfig?.mode === "ratio" && (
-                          <span className="text-purple-400"> ・ 比率割り</span>
-                        )}
-                        {expense.splitConfig?.mode === "fixed" && (
-                          <span className="text-purple-400"> ・ 金額指定</span>
-                        )}
                         {expense.adjustments && expense.adjustments.length > 0 && (
                           <span className="text-orange-400"> ・ 調整あり</span>
                         )}
@@ -771,7 +607,7 @@ export default function GroupPage() {
                       </div>
                     </div>
                     <span className="font-semibold text-sm flex-shrink-0 ml-3">
-                      {formatCurrency(expense.amount, group.currency)}
+                      {formatCurrency(expense.amount)}
                     </span>
                   </div>
                 );
@@ -785,7 +621,7 @@ export default function GroupPage() {
         <div className="mb-4">
           <label className="block text-xs text-zinc-500 mb-2">端数処理</label>
           <div className="flex rounded-xl overflow-hidden border border-zinc-800">
-            {getRoundingUnits(group.currency).map((unit) => (
+            {ROUNDING_UNITS.map((unit) => (
               <button
                 key={unit.value}
                 onClick={() => setRoundingUnit(unit.value)}
@@ -859,7 +695,7 @@ export default function GroupPage() {
                       )}
                     </div>
                     <span className={`font-bold text-sm ${isCompleted ? "line-through opacity-60" : ""}`}>
-                      {formatCurrency(s.amount, group.currency)}
+                      {formatCurrency(s.amount)}
                     </span>
                   </div>
                 );

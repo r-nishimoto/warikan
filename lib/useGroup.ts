@@ -39,7 +39,7 @@ export function reorderLocalGroupIds(ids: string[]) {
 function assembleGroup(
   groupRow: { id: string; name: string; currency: string; created_at: number; updated_at: number },
   memberRows: { id: string; name: string; preferred_receiving_method: string | null }[],
-  expenseRows: { id: string; description: string; amount: number; paid_by: string; payment_method: string; split_among: string[]; expense_date: string | null; date: number; adjustments: any | null; split_config: any | null }[],
+  expenseRows: { id: string; description: string; amount: number; paid_by: string; payment_method: string; split_among: string[]; expense_date: string | null; date: number; adjustments: any | null }[],
   settlementRows: { settlement_key: string }[]
 ): Group {
   return {
@@ -65,7 +65,6 @@ function assembleGroup(
       expenseDate: e.expense_date || undefined,
       date: e.date,
       adjustments: e.adjustments || undefined,
-      splitConfig: e.split_config || undefined,
     })),
     completedSettlements: settlementRows.map((s) => s.settlement_key),
     createdAt: groupRow.created_at,
@@ -197,7 +196,6 @@ export function useGroup(groupId: string) {
       expense_date: expense.expenseDate || null,
       date: expense.date,
       adjustments: expense.adjustments?.length ? expense.adjustments : null,
-      split_config: expense.splitConfig?.mode && expense.splitConfig.mode !== "equal" ? expense.splitConfig : null,
     });
     await touchGroup();
   }, [groupId, touchGroup]);
@@ -212,7 +210,6 @@ export function useGroup(groupId: string) {
       expense_date: expense.expenseDate || null,
       date: expense.date,
       adjustments: expense.adjustments?.length ? expense.adjustments : null,
-      split_config: expense.splitConfig?.mode && expense.splitConfig.mode !== "equal" ? expense.splitConfig : null,
     }).eq("id", expenseId);
     await touchGroup();
   }, [touchGroup]);

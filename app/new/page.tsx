@@ -4,7 +4,6 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useGroups } from "@/lib/useGroups";
-import { CURRENCIES } from "@/lib/types";
 
 export default function NewGroupPage() {
   const router = useRouter();
@@ -14,7 +13,6 @@ export default function NewGroupPage() {
   const [memberInput, setMemberInput] = useState("");
   const [memberComposing, setMemberComposing] = useState(false);
   const [members, setMembers] = useState<string[]>([]);
-  const [currency, setCurrency] = useState("JPY");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const memberInputRef = useRef<HTMLInputElement>(null);
@@ -47,7 +45,7 @@ export default function NewGroupPage() {
     }
     setSubmitting(true);
     try {
-      const group = await addGroup(trimmed, members, currency);
+      const group = await addGroup(trimmed, members);
       router.push(`/group/${group.id}`);
     } catch {
       setError("作成に失敗しました");
@@ -81,22 +79,6 @@ export default function NewGroupPage() {
             className="w-full px-4 py-3 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-base placeholder:text-zinc-500"
             autoFocus
           />
-        </div>
-
-        {/* 通貨 */}
-        <div>
-          <label className="block text-sm font-medium text-zinc-400 mb-1.5">
-            通貨
-          </label>
-          <select
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-            className="w-full px-4 py-3 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-base appearance-none"
-          >
-            {CURRENCIES.map((c) => (
-              <option key={c.value} value={c.value}>{c.label}</option>
-            ))}
-          </select>
         </div>
 
         {/* メンバー追加 */}

@@ -32,15 +32,6 @@ export interface Adjustment {
   memo?: string;        // 例: "ノンアル"
 }
 
-// 割り勘方法
-export type SplitMode = "equal" | "ratio" | "fixed";
-
-export interface SplitConfig {
-  mode: SplitMode;
-  ratios?: Record<string, number>;       // memberId → 比率値 (ratio モード)
-  fixedAmounts?: Record<string, number>;  // memberId → 固定額 (fixed モード)
-}
-
 export interface Expense {
   id: string;
   description: string;
@@ -51,7 +42,6 @@ export interface Expense {
   expenseDate?: string; // YYYY-MM-DD形式（任意）
   date: number;
   adjustments?: Adjustment[];
-  splitConfig?: SplitConfig;
 }
 
 export interface Settlement {
@@ -90,45 +80,11 @@ export function encodeReceivingMethod(method: ReceivingMethod, custom?: string):
 }
 
 // 端数処理
-export type RoundingUnit = number;
+export type RoundingUnit = 1 | 10 | 100 | 1000;
 
-export function getRoundingUnits(currency: string): { value: RoundingUnit; label: string }[] {
-  const sym = getCurrencySymbol(currency);
-  if (currency === "JPY" || currency === "KRW") {
-    return [
-      { value: 1, label: `1${sym}` },
-      { value: 10, label: `10${sym}` },
-      { value: 100, label: `100${sym}` },
-      { value: 1000, label: `1000${sym}` },
-    ];
-  }
-  return [
-    { value: 0.01, label: `0.01${sym}` },
-    { value: 0.1, label: `0.1${sym}` },
-    { value: 1, label: `1${sym}` },
-    { value: 10, label: `10${sym}` },
-  ];
-}
-
-// 通貨
-export interface CurrencyOption {
-  value: string;
-  label: string;
-  symbol: string;
-}
-
-export const CURRENCIES: CurrencyOption[] = [
-  { value: "JPY", label: "日本円 (¥)", symbol: "円" },
-  { value: "USD", label: "米ドル ($)", symbol: "$" },
-  { value: "EUR", label: "ユーロ (€)", symbol: "€" },
-  { value: "GBP", label: "英ポンド (£)", symbol: "£" },
-  { value: "THB", label: "タイバーツ (฿)", symbol: "฿" },
-  { value: "KRW", label: "韓国ウォン (₩)", symbol: "₩" },
-  { value: "TWD", label: "台湾ドル (NT$)", symbol: "NT$" },
-  { value: "AUD", label: "豪ドル (A$)", symbol: "A$" },
-  { value: "CNY", label: "人民元 (¥)", symbol: "元" },
+export const ROUNDING_UNITS: { value: RoundingUnit; label: string }[] = [
+  { value: 1, label: "1円" },
+  { value: 10, label: "10円" },
+  { value: 100, label: "100円" },
+  { value: 1000, label: "1000円" },
 ];
-
-export function getCurrencySymbol(currency: string): string {
-  return CURRENCIES.find((c) => c.value === currency)?.symbol || currency;
-}

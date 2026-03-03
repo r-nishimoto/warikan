@@ -1,11 +1,5 @@
 import lzstring from "lz-string";
-import { Group, SplitConfig } from "./types";
-
-interface MinimalSplitConfig {
-  m: string;  // mode
-  r?: Record<string, number>;  // ratios
-  f?: Record<string, number>;  // fixedAmounts
-}
+import { Group } from "./types";
 
 interface MinimalGroup {
   i: string;
@@ -22,7 +16,6 @@ interface MinimalGroup {
     s: string[];
     t: number;
     aj?: Array<{ m: string[]; a: number; mm?: string }>;
-    sc?: MinimalSplitConfig;
   }>;
   t: number;
 }
@@ -47,11 +40,6 @@ export function encodeGroupForSharing(group: Group): string {
         a: adj.amount,
         mm: adj.memo,
       })) : undefined,
-      sc: e.splitConfig?.mode && e.splitConfig.mode !== "equal" ? {
-        m: e.splitConfig.mode,
-        r: e.splitConfig.ratios,
-        f: e.splitConfig.fixedAmounts,
-      } : undefined,
     })),
     t: group.createdAt,
   };
@@ -82,11 +70,6 @@ export function decodeGroupFromSharing(encoded: string): Group | null {
           amount: adj.a,
           memo: adj.mm,
         })) || undefined,
-        splitConfig: e.sc ? {
-          mode: e.sc.m as SplitConfig["mode"],
-          ratios: e.sc.r,
-          fixedAmounts: e.sc.f,
-        } : undefined,
       })),
       completedSettlements: [],
       createdAt: minimal.t,

@@ -99,7 +99,7 @@ export default function DetailPage() {
               <div key={member.id} className="flex items-center justify-between py-3 border-b border-zinc-800">
                 <span className="font-medium text-sm">{member.name}</span>
                 <span className={`font-bold text-sm ${isPositive ? "text-blue-400" : balance < 0 ? "text-rose-400" : "text-zinc-400"}`}>
-                  {isPositive ? "+" : ""}{formatCurrency(Math.round(balance), group.currency)}
+                  {isPositive ? "+" : ""}{formatCurrency(Math.round(balance))}
                 </span>
               </div>
             );
@@ -116,14 +116,14 @@ export default function DetailPage() {
               return (
                 <div key={member.id} className="flex items-center justify-between py-3 border-b border-zinc-800">
                   <span className="font-medium text-sm">{member.name}</span>
-                  <span className="font-bold text-sm">{formatCurrency(Math.round(memberSpending), group.currency)}</span>
+                  <span className="font-bold text-sm">{formatCurrency(Math.round(memberSpending))}</span>
                 </div>
               );
             })}
           </div>
           <div className="flex items-center justify-between py-3 border-t-2 border-zinc-700 mt-2">
             <span className="font-bold text-sm">グループ支出合計</span>
-            <span className="font-bold text-sm">{formatCurrency(totalSpending, group.currency)}</span>
+            <span className="font-bold text-sm">{formatCurrency(totalSpending)}</span>
           </div>
         </div>
       )}

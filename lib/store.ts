@@ -7,7 +7,7 @@ import { Group, Expense, ReceivingMethod } from "./types";
 
 interface WarikanStore {
   groups: Group[];
-  addGroup: (name: string, currency?: string) => Group;
+  addGroup: (name: string) => Group;
   getGroup: (id: string) => Group | undefined;
   deleteGroup: (groupId: string) => void;
   addMember: (groupId: string, name: string) => void;
@@ -27,11 +27,11 @@ export const useStore = create<WarikanStore>()(
     (set, get) => ({
       groups: [],
 
-      addGroup: (name: string, currency: string = "JPY") => {
+      addGroup: (name: string) => {
         const group: Group = {
           id: nanoid(8),
           name,
-          currency,
+          currency: "JPY",
           members: [],
           expenses: [],
           completedSettlements: [],
