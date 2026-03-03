@@ -177,10 +177,10 @@ export function LandingContent() {
           <p className="text-base font-bold mb-4">1. グループを作成する</p>
           <PhoneMockup>
             <div className="text-[10px] text-zinc-500">グループ名</div>
-            <div className="bg-zinc-800 rounded-lg px-2 py-1.5 text-xs font-bold">同期で北海道旅行！</div>
+            <div className="bg-zinc-800 rounded-lg px-2 py-1.5 text-xs font-bold">夏キャンプ 2026</div>
             <div className="text-[10px] text-zinc-500 mt-1">メンバー</div>
             <div className="flex flex-wrap gap-1">
-              {["あおい", "レン", "ハルト", "なぎ"].map((n) => (
+              {["たくみ", "さき", "ゆうた", "みお"].map((n) => (
                 <span key={n} className="bg-zinc-800 rounded-full px-2 py-0.5 text-[10px] text-zinc-300">{n} ×</span>
               ))}
             </div>
@@ -197,16 +197,16 @@ export function LandingContent() {
           <p className="text-base font-bold mb-4">2. 立て替えを記録する</p>
           <PhoneMockup>
             <div className="flex items-center gap-1">
-              <span className="bg-blue-500/20 text-blue-400 rounded-full px-2 py-0.5 text-[10px]">あおい</span>
+              <span className="bg-blue-500/20 text-blue-400 rounded-full px-2 py-0.5 text-[10px]">たくみ</span>
               <span className="text-[10px] text-zinc-500">が</span>
             </div>
             <div className="flex flex-wrap gap-1 mt-1">
-              {["あおい", "レン", "ハルト", "なぎ"].map((n) => (
+              {["たくみ", "さき", "ゆうた", "みお"].map((n) => (
                 <span key={n} className="bg-blue-500/20 border border-blue-500/40 rounded px-1.5 py-0.5 text-[9px] text-blue-300">{n}</span>
               ))}
             </div>
-            <div className="bg-zinc-800 rounded-lg px-2 py-1.5 text-xs mt-1">レンタカー代</div>
-            <div className="bg-zinc-800 rounded-lg px-2 py-1.5 text-xs font-bold mt-1">¥9,800</div>
+            <div className="bg-zinc-800 rounded-lg px-2 py-1.5 text-xs mt-1">BBQ食材</div>
+            <div className="bg-zinc-800 rounded-lg px-2 py-1.5 text-xs font-bold mt-1">¥7,600</div>
             <div className="bg-blue-500 rounded-lg py-1.5 text-xs text-white text-center font-medium mt-2">登録</div>
           </PhoneMockup>
           <p className="text-zinc-500 text-sm mt-4 leading-relaxed">
@@ -222,16 +222,16 @@ export function LandingContent() {
             <div className="text-[10px] text-zinc-500 font-bold">精算方法</div>
             <div className="space-y-1.5 mt-1">
               <div className="bg-zinc-800 rounded-lg px-2 py-2 flex items-center justify-between">
-                <span className="text-[10px]"><span className="text-blue-400">レン</span> → <span className="text-emerald-400">あおい</span></span>
-                <span className="text-[11px] font-bold">¥3,200</span>
+                <span className="text-[10px]"><span className="text-blue-400">さき</span> → <span className="text-emerald-400">たくみ</span></span>
+                <span className="text-[11px] font-bold">¥2,400</span>
               </div>
               <div className="bg-zinc-800 rounded-lg px-2 py-2 flex items-center justify-between">
-                <span className="text-[10px]"><span className="text-blue-400">ハルト</span> → <span className="text-emerald-400">あおい</span></span>
-                <span className="text-[11px] font-bold">¥1,800</span>
+                <span className="text-[10px]"><span className="text-blue-400">みお</span> → <span className="text-emerald-400">たくみ</span></span>
+                <span className="text-[11px] font-bold">¥1,500</span>
               </div>
               <div className="bg-zinc-800 rounded-lg px-2 py-2 flex items-center justify-between">
-                <span className="text-[10px]"><span className="text-blue-400">なぎ</span> → <span className="text-emerald-400">レン</span></span>
-                <span className="text-[11px] font-bold">¥900</span>
+                <span className="text-[10px]"><span className="text-blue-400">ゆうた</span> → <span className="text-emerald-400">さき</span></span>
+                <span className="text-[11px] font-bold">¥700</span>
               </div>
             </div>
             <div className="flex gap-1 mt-2">
