@@ -7,55 +7,76 @@ function roundUp(amount: number, unit: RoundingUnit): number {
 
 /**
  * 支出ごとの各メンバーの負担額を計算
- * 調整なし: 均等割り
- * 調整あり: 調整メンバーは baseShare + adjustment、残額を非調整メンバーで均等割り
+ * Step1: splitConfig.mode に応じてベース負担額を計算
+ * Step2: adjustments を全モード共通で適用
  */
 export function calculateMemberShares(expense: Expense): Map<string, number> {
-  const { amount, splitAmong, adjustments } = expense;
+  const { amount, splitAmong, adjustments, splitConfig } = expense;
   const shares = new Map<string, number>();
+  const mode = splitConfig?.mode || "equal";
 
-  if (!adjustments || adjustments.length === 0) {
-    // 調整なし: 従来通り均等割り
+  // Step 1: モード別ベース負担額
+  if (mode === "ratio" && splitConfig?.ratios) {
+    const totalRatio = splitAmong.reduce((sum, id) => sum + (splitConfig.ratios![id] || 1), 0);
+    splitAmong.forEach((id) => {
+      const ratio = splitConfig.ratios![id] || 1;
+      shares.set(id, Math.round(amount * ratio / totalRatio));
+    });
+  } else if (mode === "fixed" && splitConfig?.fixedAmounts) {
+    let specifiedTotal = 0;
+    const unspecified: string[] = [];
+    splitAmong.forEach((id) => {
+      const fixed = splitConfig.fixedAmounts![id];
+      if (fixed !== undefined && fixed > 0) {
+        shares.set(id, fixed);
+        specifiedTotal += fixed;
+      } else {
+        unspecified.push(id);
+      }
+    });
+    // 残額を未指定メンバーで均等配分
+    if (unspecified.length > 0) {
+      const remaining = amount - specifiedTotal;
+      const perMember = Math.round(remaining / unspecified.length);
+      unspecified.forEach((id) => shares.set(id, perMember));
+    }
+  } else {
+    // equal（デフォルト）
     const share = Math.round(amount / splitAmong.length);
-    splitAmong.forEach((memberId) => shares.set(memberId, share));
-    return shares;
+    splitAmong.forEach((id) => shares.set(id, share));
   }
 
-  // 各メンバーの調整額を集計（複数調整が同一メンバーに適用される場合あり）
+  // Step 2: adjustments 適用（全モード共通）
+  if (!adjustments || adjustments.length === 0) return shares;
+
   const adjustmentPerMember = new Map<string, number>();
   for (const adj of adjustments) {
     for (const memberId of adj.memberIds) {
       if (splitAmong.includes(memberId)) {
-        adjustmentPerMember.set(
-          memberId,
-          (adjustmentPerMember.get(memberId) || 0) + adj.amount
-        );
+        adjustmentPerMember.set(memberId, (adjustmentPerMember.get(memberId) || 0) + adj.amount);
       }
     }
   }
 
-  const baseShare = amount / splitAmong.length;
   const adjustedMemberIds = new Set(adjustmentPerMember.keys());
   let adjustedTotal = 0;
 
-  // 調整メンバーの負担額を計算
   for (const memberId of splitAmong) {
     if (adjustedMemberIds.has(memberId)) {
-      const memberShare = Math.round(baseShare + adjustmentPerMember.get(memberId)!);
+      const memberShare = Math.round((shares.get(memberId) || 0) + adjustmentPerMember.get(memberId)!);
       shares.set(memberId, memberShare);
-      adjustedTotal += memberShare;
     }
+    adjustedTotal += shares.get(memberId) || 0;
   }
 
-  // 残額を非調整メンバーで均等割り
+  // 残額を非調整メンバーで再配分
   const nonAdjustedMembers = splitAmong.filter((id) => !adjustedMemberIds.has(id));
-  const remainingForNonAdjusted = amount - adjustedTotal;
-
-  if (nonAdjustedMembers.length > 0) {
-    const perNonAdjusted = Math.round(remainingForNonAdjusted / nonAdjustedMembers.length);
-    nonAdjustedMembers.forEach((memberId) => {
-      shares.set(memberId, perNonAdjusted);
-    });
+  if (nonAdjustedMembers.length > 0 && adjustedTotal !== amount) {
+    const currentNonAdjTotal = nonAdjustedMembers.reduce((sum, id) => sum + (shares.get(id) || 0), 0);
+    const adjustedOnlyTotal = adjustedTotal - currentNonAdjTotal;
+    const remaining = amount - adjustedOnlyTotal;
+    const perMember = Math.round(remaining / nonAdjustedMembers.length);
+    nonAdjustedMembers.forEach((id) => shares.set(id, perMember));
   }
 
   return shares;

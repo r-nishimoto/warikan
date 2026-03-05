@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useGroup } from "@/lib/useGroup";
 import { formatNumberWithCommas, removeCommas, formatCurrency } from "@/lib/utils";
-import { Adjustment, Expense, PaymentMethod, PAYMENT_METHODS } from "@/lib/types";
+import { Adjustment, Expense, PaymentMethod, PAYMENT_METHODS, SplitMode, SplitConfig } from "@/lib/types";
 import { calculateMemberShares } from "@/lib/settlement";
 
 export default function AddExpensePage() {
@@ -24,6 +24,11 @@ export default function AddExpensePage() {
   });
   const [descComposing, setDescComposing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  // 割り勘方法
+  const [splitMode, setSplitMode] = useState<SplitMode>("equal");
+  const [ratios, setRatios] = useState<Record<string, string>>({});
+  const [fixedAmounts, setFixedAmounts] = useState<Record<string, string>>({});
 
   // 調整
   type AdjustmentInput = { memberIds: string[]; amount: string; memo: string };
@@ -69,6 +74,16 @@ export default function AddExpensePage() {
     if (!description.trim() || !numAmount || !paidBy || splitAmong.length === 0) return;
 
     setSubmitting(true);
+    let splitConfig: SplitConfig | undefined;
+    if (splitMode === "ratio") {
+      const r: Record<string, number> = {};
+      splitAmong.forEach((mid) => { r[mid] = parseInt(ratios[mid] || "1", 10) || 1; });
+      splitConfig = { mode: "ratio", ratios: r };
+    } else if (splitMode === "fixed") {
+      const f: Record<string, number> = {};
+      splitAmong.forEach((mid) => { f[mid] = parseInt(fixedAmounts[mid] || "0", 10) || 0; });
+      splitConfig = { mode: "fixed", fixedAmounts: f };
+    }
     await addExpense({
       description: description.trim(),
       amount: numAmount,
@@ -78,9 +93,10 @@ export default function AddExpensePage() {
       expenseDate: expenseDate || undefined,
       date: Date.now(),
       adjustments: parseAdjustments(adjustments),
+      splitConfig,
     });
     router.push(`/group/${id}`);
-  }, [group, submitting, description, amount, paidBy, paymentMethod, splitAmong, expenseDate, adjustments, addExpense, router, id]);
+  }, [group, submitting, description, amount, paidBy, paymentMethod, splitAmong, expenseDate, adjustments, splitMode, ratios, fixedAmounts, addExpense, router, id]);
 
   if (loading) {
     return (
@@ -226,6 +242,124 @@ export default function AddExpensePage() {
           </div>
         </div>
 
+        {/* 割り勘方法 */}
+        {splitAmong.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium text-zinc-400 mb-1.5">割り勘方法</label>
+            <div className="flex rounded-xl overflow-hidden border border-zinc-800">
+              {([
+                { value: "equal" as SplitMode, label: "均等" },
+                { value: "ratio" as SplitMode, label: "比率" },
+                { value: "fixed" as SplitMode, label: "金額指定" },
+              ]).map((mode) => (
+                <button
+                  key={mode.value}
+                  onClick={() => setSplitMode(mode.value)}
+                  className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
+                    splitMode === mode.value
+                      ? "bg-blue-500 text-white"
+                      : "bg-zinc-900 text-zinc-400 active:bg-zinc-800"
+                  }`}
+                >
+                  {mode.label}
+                </button>
+              ))}
+            </div>
+
+            {/* 比率入力 */}
+            {splitMode === "ratio" && (
+              <div className="mt-3 space-y-2">
+                <p className="text-xs text-zinc-500">各メンバーの比率を入力</p>
+                {splitAmong.map((memberId) => {
+                  const member = group.members.find((m) => m.id === memberId);
+                  return (
+                    <div key={memberId} className="flex items-center gap-3">
+                      <span className="text-sm text-zinc-300 w-20 truncate">{member?.name}</span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={ratios[memberId] || "1"}
+                        onChange={(e) => {
+                          const v = e.target.value.replace(/[^0-9]/g, "");
+                          setRatios((prev) => ({ ...prev, [memberId]: v }));
+                        }}
+                        className="flex-1 px-3 py-2 border border-zinc-700 bg-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-center"
+                      />
+                    </div>
+                  );
+                })}
+                {parseInt(amount, 10) > 0 && (
+                  <div className="bg-zinc-800/30 rounded-xl p-3 mt-2">
+                    <p className="text-xs text-zinc-500 mb-2">1人あたり金額（目安）</p>
+                    <div className="space-y-1">
+                      {(() => {
+                        const numAmount = parseInt(amount, 10);
+                        const totalRatio = splitAmong.reduce((sum, mid) => sum + (parseInt(ratios[mid] || "1", 10) || 1), 0);
+                        return splitAmong.map((memberId) => {
+                          const member = group.members.find((m) => m.id === memberId);
+                          const ratio = parseInt(ratios[memberId] || "1", 10) || 1;
+                          const memberShare = Math.round(numAmount * ratio / totalRatio);
+                          return (
+                            <div key={memberId} className="flex justify-between text-xs">
+                              <span className="text-zinc-400">{member?.name} ({ratio})</span>
+                              <span className="text-zinc-300">{formatCurrency(memberShare)}</span>
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 金額指定入力 */}
+            {splitMode === "fixed" && (
+              <div className="mt-3 space-y-2">
+                <p className="text-xs text-zinc-500">各メンバーの負担額を入力</p>
+                {splitAmong.map((memberId) => {
+                  const member = group.members.find((m) => m.id === memberId);
+                  return (
+                    <div key={memberId} className="flex items-center gap-3">
+                      <span className="text-sm text-zinc-300 w-20 truncate">{member?.name}</span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={formatNumberWithCommas(fixedAmounts[memberId] || "")}
+                        onChange={(e) => {
+                          const v = removeCommas(e.target.value).replace(/[^0-9]/g, "");
+                          setFixedAmounts((prev) => ({ ...prev, [memberId]: v }));
+                        }}
+                        placeholder="0"
+                        className="flex-1 px-3 py-2 border border-zinc-700 bg-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-right"
+                      />
+                      <span className="text-zinc-500 text-xs">円</span>
+                    </div>
+                  );
+                })}
+                {parseInt(amount, 10) > 0 && (
+                  <div className={`text-xs mt-1 ${
+                    (() => {
+                      const total = splitAmong.reduce((sum, mid) => sum + (parseInt(fixedAmounts[mid] || "0", 10) || 0), 0);
+                      const numAmount = parseInt(amount, 10);
+                      return total === numAmount ? "text-emerald-400" : total > numAmount ? "text-rose-400" : "text-zinc-500";
+                    })()
+                  }`}>
+                    {(() => {
+                      const total = splitAmong.reduce((sum, mid) => sum + (parseInt(fixedAmounts[mid] || "0", 10) || 0), 0);
+                      const numAmount = parseInt(amount, 10);
+                      const diff = numAmount - total;
+                      if (diff === 0) return "合計が一致しています";
+                      if (diff > 0) return `残り ${formatCurrency(diff)}`;
+                      return `${formatCurrency(-diff)} 超過しています`;
+                    })()}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* 割引・調整（任意） */}
         {splitAmong.length > 0 && (
           <div>
@@ -330,6 +464,16 @@ export default function AddExpensePage() {
                       <p className="text-xs text-zinc-500 mb-2">調整後の1人あたり金額（目安）</p>
                       <div className="space-y-1">
                         {(() => {
+                          let previewSplitConfig: SplitConfig | undefined;
+                          if (splitMode === "ratio") {
+                            const r: Record<string, number> = {};
+                            splitAmong.forEach((mid) => { r[mid] = parseInt(ratios[mid] || "1", 10) || 1; });
+                            previewSplitConfig = { mode: "ratio", ratios: r };
+                          } else if (splitMode === "fixed") {
+                            const f: Record<string, number> = {};
+                            splitAmong.forEach((mid) => { f[mid] = parseInt(fixedAmounts[mid] || "0", 10) || 0; });
+                            previewSplitConfig = { mode: "fixed", fixedAmounts: f };
+                          }
                           const tempExpense: Expense = {
                             id: "preview",
                             description: "",
@@ -339,6 +483,7 @@ export default function AddExpensePage() {
                             splitAmong,
                             date: 0,
                             adjustments: parseAdjustments(adjustments),
+                            splitConfig: previewSplitConfig,
                           };
                           const shares = calculateMemberShares(tempExpense);
                           return splitAmong.map((memberId) => {

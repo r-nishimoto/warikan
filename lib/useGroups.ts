@@ -58,6 +58,7 @@ export function useGroups() {
           expenseDate: e.expense_date || undefined,
           date: e.date,
           adjustments: e.adjustments || undefined,
+          splitConfig: e.split_config || undefined,
         })),
       completedSettlements: [],
       createdAt: g.created_at,

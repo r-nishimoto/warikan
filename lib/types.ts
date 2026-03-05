@@ -32,6 +32,14 @@ export interface Adjustment {
   memo?: string;        // 例: "ノンアル"
 }
 
+export type SplitMode = "equal" | "ratio" | "fixed";
+
+export interface SplitConfig {
+  mode: SplitMode;
+  ratios?: Record<string, number>;       // memberId → 比率値
+  fixedAmounts?: Record<string, number>;  // memberId → 固定額
+}
+
 export interface Expense {
   id: string;
   description: string;
@@ -42,6 +50,7 @@ export interface Expense {
   expenseDate?: string; // YYYY-MM-DD形式（任意）
   date: number;
   adjustments?: Adjustment[];
+  splitConfig?: SplitConfig;
 }
 
 export interface Settlement {
