@@ -39,14 +39,14 @@ export default function GroupPage() {
   const [editDescComposing, setEditDescComposing] = useState(false);
 
   // 割り勘方法（Edit form）
-  const [editSplitMode, setEditSplitMode] = useState<SplitMode>("equal");
+  type UISplitMode = SplitMode | "discount";
+  const [editSplitMode, setEditSplitMode] = useState<UISplitMode>("equal");
   const [editRatios, setEditRatios] = useState<Record<string, string>>({});
   const [editFixedAmounts, setEditFixedAmounts] = useState<Record<string, string>>({});
 
   // 調整（Edit form）
   type AdjustmentInput = { memberIds: string[]; amount: string; memo: string };
   const [editAdjustments, setEditAdjustments] = useState<AdjustmentInput[]>([]);
-  const [showEditAdjustments, setShowEditAdjustments] = useState(false);
 
   const startEditing = (expense: Expense) => {
     setEditingId(expense.id);
@@ -63,9 +63,10 @@ export default function GroupPage() {
         memo: adj.memo || "",
       })) || []
     );
-    setShowEditAdjustments((expense.adjustments?.length || 0) > 0);
     const sc = expense.splitConfig;
-    setEditSplitMode(sc?.mode || "equal");
+    const hasAdjustments = (expense.adjustments?.length || 0) > 0;
+    const baseMode = sc?.mode || "equal";
+    setEditSplitMode(baseMode === "equal" && hasAdjustments ? "discount" : baseMode);
     setEditRatios(
       sc?.ratios
         ? Object.fromEntries(Object.entries(sc.ratios).map(([k, v]) => [k, String(v)]))
@@ -113,7 +114,7 @@ export default function GroupPage() {
       splitAmong: editSplitAmong,
       expenseDate: editExpenseDate || undefined,
       date: Date.now(),
-      adjustments: parseAdjustments(editAdjustments),
+      adjustments: editSplitMode === "discount" ? parseAdjustments(editAdjustments) : undefined,
       splitConfig,
     });
     setEditingId(null);
@@ -433,13 +434,19 @@ export default function GroupPage() {
                           <label className="block text-xs text-zinc-500 mb-1.5">割り勘方法</label>
                           <div className="flex rounded-xl overflow-hidden border border-zinc-800">
                             {([
-                              { value: "equal" as SplitMode, label: "均等" },
-                              { value: "ratio" as SplitMode, label: "比率" },
-                              { value: "fixed" as SplitMode, label: "金額指定" },
+                              { value: "equal" as UISplitMode, label: "均等" },
+                              { value: "ratio" as UISplitMode, label: "比率" },
+                              { value: "fixed" as UISplitMode, label: "金額指定" },
+                              { value: "discount" as UISplitMode, label: "割引" },
                             ]).map((mode) => (
                               <button
                                 key={mode.value}
-                                onClick={() => setEditSplitMode(mode.value)}
+                                onClick={() => {
+                                  setEditSplitMode(mode.value);
+                                  if (mode.value === "discount" && editAdjustments.length === 0) {
+                                    setEditAdjustments([{ memberIds: [], amount: "", memo: "" }]);
+                                  }
+                                }}
                                 className={`flex-1 py-2 text-sm font-medium transition-colors ${
                                   editSplitMode === mode.value
                                     ? "bg-blue-500 text-white"
@@ -463,7 +470,7 @@ export default function GroupPage() {
                                     <input
                                       type="text"
                                       inputMode="numeric"
-                                      value={editRatios[memberId] || "1"}
+                                      value={memberId in editRatios ? editRatios[memberId] : "1"}
                                       onChange={(e) => {
                                         const v = e.target.value.replace(/[^0-9]/g, "");
                                         setEditRatios((prev) => ({ ...prev, [memberId]: v }));
@@ -542,32 +549,14 @@ export default function GroupPage() {
                               )}
                             </div>
                           )}
-                        </div>
-                      )}
 
-                      {/* 割引・調整（編集） */}
-                      {editSplitAmong.length > 0 && (
-                        <div>
-                          <button
-                            type="button"
-                            onClick={() => setShowEditAdjustments(!showEditAdjustments)}
-                            className="flex items-center gap-1.5 text-xs text-zinc-500 active:text-zinc-400"
-                          >
-                            <span className={`transition-transform duration-150 ${showEditAdjustments ? "rotate-90" : ""}`}>▶</span>
-                            割引・調整（任意）
-                            {editAdjustments.length > 0 && (
-                              <span className="ml-1 px-1.5 py-0.5 bg-orange-500/20 text-orange-400 rounded-full text-[10px]">
-                                {editAdjustments.length}
-                              </span>
-                            )}
-                          </button>
-
-                          {showEditAdjustments && (
+                          {/* 割引入力 */}
+                          {editSplitMode === "discount" && (
                             <div className="mt-3 space-y-3">
                               {editAdjustments.map((adj, index) => (
                                 <div key={index} className="bg-zinc-800/50 rounded-xl p-3 space-y-2">
                                   <div className="flex items-center justify-between">
-                                    <span className="text-xs text-zinc-500">調整 {index + 1}</span>
+                                    <span className="text-xs text-zinc-500">割引 {index + 1}</span>
                                     <button
                                       onClick={() => setEditAdjustments((prev) => prev.filter((_, i) => i !== index))}
                                       className="text-xs text-rose-400 active:text-rose-300"
@@ -638,7 +627,7 @@ export default function GroupPage() {
                                 onClick={() => setEditAdjustments((prev) => [...prev, { memberIds: [], amount: "", memo: "" }])}
                                 className="w-full py-2 border border-dashed border-zinc-700 text-zinc-500 rounded-xl text-sm active:bg-zinc-800"
                               >
-                                + 調整を追加
+                                + 割引を追加
                               </button>
 
                               {/* プレビュー */}
@@ -646,19 +635,9 @@ export default function GroupPage() {
                                 parseInt(editAmount, 10) > 0 &&
                                 editSplitAmong.length > 0 && (
                                   <div className="bg-zinc-800/30 rounded-xl p-3">
-                                    <p className="text-xs text-zinc-500 mb-2">調整後の1人あたり金額（目安）</p>
+                                    <p className="text-xs text-zinc-500 mb-2">割引後の1人あたり金額（目安）</p>
                                     <div className="space-y-1">
                                       {(() => {
-                                        let previewSplitConfig: SplitConfig | undefined;
-                                        if (editSplitMode === "ratio") {
-                                          const r: Record<string, number> = {};
-                                          editSplitAmong.forEach((mid) => { r[mid] = parseInt(editRatios[mid] || "1", 10) || 1; });
-                                          previewSplitConfig = { mode: "ratio", ratios: r };
-                                        } else if (editSplitMode === "fixed") {
-                                          const f: Record<string, number> = {};
-                                          editSplitAmong.forEach((mid) => { f[mid] = parseInt(editFixedAmounts[mid] || "0", 10) || 0; });
-                                          previewSplitConfig = { mode: "fixed", fixedAmounts: f };
-                                        }
                                         const tempExpense: Expense = {
                                           id: "preview",
                                           description: "",
@@ -668,7 +647,6 @@ export default function GroupPage() {
                                           splitAmong: editSplitAmong,
                                           date: 0,
                                           adjustments: parseAdjustments(editAdjustments),
-                                          splitConfig: previewSplitConfig,
                                         };
                                         const shares = calculateMemberShares(tempExpense);
                                         return editSplitAmong.map((memberId) => {
@@ -750,7 +728,7 @@ export default function GroupPage() {
                           <span className="text-purple-400"> ・ 金額指定</span>
                         )}
                         {expense.adjustments && expense.adjustments.length > 0 && (
-                          <span className="text-orange-400"> ・ 調整あり</span>
+                          <span className="text-orange-400"> ・ 割引あり</span>
                         )}
                       </div>
                       <div className="flex items-center gap-1 mt-1.5">

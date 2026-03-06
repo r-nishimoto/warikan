@@ -26,14 +26,14 @@ export default function AddExpensePage() {
   const [submitting, setSubmitting] = useState(false);
 
   // 割り勘方法
-  const [splitMode, setSplitMode] = useState<SplitMode>("equal");
+  type UISplitMode = SplitMode | "discount";
+  const [splitMode, setSplitMode] = useState<UISplitMode>("equal");
   const [ratios, setRatios] = useState<Record<string, string>>({});
   const [fixedAmounts, setFixedAmounts] = useState<Record<string, string>>({});
 
   // 調整
   type AdjustmentInput = { memberIds: string[]; amount: string; memo: string };
   const [adjustments, setAdjustments] = useState<AdjustmentInput[]>([]);
-  const [showAdjustments, setShowAdjustments] = useState(false);
 
   const parseAdjustments = (inputs: AdjustmentInput[]): Adjustment[] | undefined => {
     const parsed = inputs
@@ -92,7 +92,7 @@ export default function AddExpensePage() {
       splitAmong,
       expenseDate: expenseDate || undefined,
       date: Date.now(),
-      adjustments: parseAdjustments(adjustments),
+      adjustments: splitMode === "discount" ? parseAdjustments(adjustments) : undefined,
       splitConfig,
     });
     router.push(`/group/${id}`);
@@ -248,13 +248,19 @@ export default function AddExpensePage() {
             <label className="block text-sm font-medium text-zinc-400 mb-1.5">割り勘方法</label>
             <div className="flex rounded-xl overflow-hidden border border-zinc-800">
               {([
-                { value: "equal" as SplitMode, label: "均等" },
-                { value: "ratio" as SplitMode, label: "比率" },
-                { value: "fixed" as SplitMode, label: "金額指定" },
+                { value: "equal" as UISplitMode, label: "均等" },
+                { value: "ratio" as UISplitMode, label: "比率" },
+                { value: "fixed" as UISplitMode, label: "金額指定" },
+                { value: "discount" as UISplitMode, label: "割引" },
               ]).map((mode) => (
                 <button
                   key={mode.value}
-                  onClick={() => setSplitMode(mode.value)}
+                  onClick={() => {
+                    setSplitMode(mode.value);
+                    if (mode.value === "discount" && adjustments.length === 0) {
+                      setAdjustments([{ memberIds: [], amount: "", memo: "" }]);
+                    }
+                  }}
                   className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
                     splitMode === mode.value
                       ? "bg-blue-500 text-white"
@@ -278,7 +284,7 @@ export default function AddExpensePage() {
                       <input
                         type="text"
                         inputMode="numeric"
-                        value={ratios[memberId] || "1"}
+                        value={memberId in ratios ? ratios[memberId] : "1"}
                         onChange={(e) => {
                           const v = e.target.value.replace(/[^0-9]/g, "");
                           setRatios((prev) => ({ ...prev, [memberId]: v }));
@@ -357,32 +363,14 @@ export default function AddExpensePage() {
                 )}
               </div>
             )}
-          </div>
-        )}
 
-        {/* 割引・調整（任意） */}
-        {splitAmong.length > 0 && (
-          <div>
-            <button
-              type="button"
-              onClick={() => setShowAdjustments(!showAdjustments)}
-              className="flex items-center gap-1.5 text-xs text-zinc-500 active:text-zinc-400"
-            >
-              <span className={`transition-transform duration-150 ${showAdjustments ? "rotate-90" : ""}`}>▶</span>
-              割引・調整（任意）
-              {adjustments.length > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 bg-orange-500/20 text-orange-400 rounded-full text-[10px]">
-                  {adjustments.length}
-                </span>
-              )}
-            </button>
-
-            {showAdjustments && (
+            {/* 割引入力 */}
+            {splitMode === "discount" && (
               <div className="mt-3 space-y-3">
                 {adjustments.map((adj, index) => (
                   <div key={index} className="bg-zinc-800/50 rounded-xl p-3 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-zinc-500">調整 {index + 1}</span>
+                      <span className="text-xs text-zinc-500">割引 {index + 1}</span>
                       <button
                         onClick={() => setAdjustments((prev) => prev.filter((_, i) => i !== index))}
                         className="text-xs text-rose-400 active:text-rose-300"
@@ -453,7 +441,7 @@ export default function AddExpensePage() {
                   onClick={() => setAdjustments((prev) => [...prev, { memberIds: [], amount: "", memo: "" }])}
                   className="w-full py-2 border border-dashed border-zinc-700 text-zinc-500 rounded-xl text-sm active:bg-zinc-800"
                 >
-                  + 調整を追加
+                  + 割引を追加
                 </button>
 
                 {/* プレビュー */}
@@ -461,19 +449,9 @@ export default function AddExpensePage() {
                   parseInt(amount, 10) > 0 &&
                   splitAmong.length > 0 && (
                     <div className="bg-zinc-800/30 rounded-xl p-3">
-                      <p className="text-xs text-zinc-500 mb-2">調整後の1人あたり金額（目安）</p>
+                      <p className="text-xs text-zinc-500 mb-2">割引後の1人あたり金額（目安）</p>
                       <div className="space-y-1">
                         {(() => {
-                          let previewSplitConfig: SplitConfig | undefined;
-                          if (splitMode === "ratio") {
-                            const r: Record<string, number> = {};
-                            splitAmong.forEach((mid) => { r[mid] = parseInt(ratios[mid] || "1", 10) || 1; });
-                            previewSplitConfig = { mode: "ratio", ratios: r };
-                          } else if (splitMode === "fixed") {
-                            const f: Record<string, number> = {};
-                            splitAmong.forEach((mid) => { f[mid] = parseInt(fixedAmounts[mid] || "0", 10) || 0; });
-                            previewSplitConfig = { mode: "fixed", fixedAmounts: f };
-                          }
                           const tempExpense: Expense = {
                             id: "preview",
                             description: "",
@@ -483,7 +461,6 @@ export default function AddExpensePage() {
                             splitAmong,
                             date: 0,
                             adjustments: parseAdjustments(adjustments),
-                            splitConfig: previewSplitConfig,
                           };
                           const shares = calculateMemberShares(tempExpense);
                           return splitAmong.map((memberId) => {
