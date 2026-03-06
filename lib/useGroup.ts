@@ -186,7 +186,7 @@ export function useGroup(groupId: string) {
 
   const addExpense = useCallback(async (expense: Omit<Expense, "id">) => {
     const expenseId = nanoid(8);
-    const { error } = await supabase.from("expenses").insert({
+    const insertData: Record<string, unknown> = {
       id: expenseId,
       group_id: groupId,
       description: expense.description,
@@ -197,14 +197,17 @@ export function useGroup(groupId: string) {
       expense_date: expense.expenseDate || null,
       date: expense.date,
       adjustments: expense.adjustments?.length ? expense.adjustments : null,
-      split_config: expense.splitConfig?.mode && expense.splitConfig.mode !== "equal" ? expense.splitConfig : null,
-    });
+    };
+    if (expense.splitConfig?.mode && expense.splitConfig.mode !== "equal") {
+      insertData.split_config = expense.splitConfig;
+    }
+    const { error } = await supabase.from("expenses").insert(insertData);
     if (error) throw new Error(error.message);
     await touchGroup();
   }, [groupId, touchGroup]);
 
   const updateExpense = useCallback(async (expenseId: string, expense: Omit<Expense, "id">) => {
-    await supabase.from("expenses").update({
+    const updateData: Record<string, unknown> = {
       description: expense.description,
       amount: expense.amount,
       paid_by: expense.paidBy,
@@ -213,8 +216,12 @@ export function useGroup(groupId: string) {
       expense_date: expense.expenseDate || null,
       date: expense.date,
       adjustments: expense.adjustments?.length ? expense.adjustments : null,
-      split_config: expense.splitConfig?.mode && expense.splitConfig.mode !== "equal" ? expense.splitConfig : null,
-    }).eq("id", expenseId);
+    };
+    if (expense.splitConfig?.mode && expense.splitConfig.mode !== "equal") {
+      updateData.split_config = expense.splitConfig;
+    }
+    const { error } = await supabase.from("expenses").update(updateData).eq("id", expenseId);
+    if (error) throw new Error(error.message);
     await touchGroup();
   }, [touchGroup]);
 
