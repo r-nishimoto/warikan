@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "./supabase";
-import { Group, Member, Expense, ReceivingMethod, PaymentMethod, parseReceivingMethod, encodeReceivingMethod } from "./types";
+import { Group, Member, Expense, Adjustment, SplitConfig, ReceivingMethod, PaymentMethod, parseReceivingMethod, encodeReceivingMethod } from "./types";
 import { nanoid } from "nanoid";
 
 // ローカルのグループIDレジストリ管理
@@ -35,11 +35,34 @@ export function reorderLocalGroupIds(ids: string[]) {
   localStorage.setItem(GROUP_IDS_KEY, JSON.stringify(ids));
 }
 
+// adjustments JSONB カラムに splitConfig も格納する
+// 新形式: { items?: Adjustment[], splitConfig?: SplitConfig }
+// 旧形式（後方互換）: Adjustment[] （配列のまま）
+function encodeAdjustmentsColumn(adjustments?: Adjustment[], splitConfig?: SplitConfig): any | null {
+  const hasAdj = adjustments && adjustments.length > 0;
+  const hasCfg = splitConfig?.mode && splitConfig.mode !== "equal";
+  if (!hasAdj && !hasCfg) return null;
+  if (hasAdj && !hasCfg) return adjustments; // 旧形式互換
+  return {
+    ...(hasAdj ? { items: adjustments } : {}),
+    ...(hasCfg ? { splitConfig } : {}),
+  };
+}
+
+function decodeAdjustmentsColumn(raw: any): { adjustments?: Adjustment[]; splitConfig?: SplitConfig } {
+  if (!raw) return {};
+  if (Array.isArray(raw)) return { adjustments: raw }; // 旧形式
+  return {
+    adjustments: raw.items || undefined,
+    splitConfig: raw.splitConfig || undefined,
+  };
+}
+
 // DB行 → アプリ型の変換
 function assembleGroup(
   groupRow: { id: string; name: string; currency: string; created_at: number; updated_at: number },
   memberRows: { id: string; name: string; preferred_receiving_method: string | null }[],
-  expenseRows: { id: string; description: string; amount: number; paid_by: string; payment_method: string; split_among: string[]; expense_date: string | null; date: number; adjustments: any | null; split_config: any | null }[],
+  expenseRows: { id: string; description: string; amount: number; paid_by: string; payment_method: string; split_among: string[]; expense_date: string | null; date: number; adjustments: any | null }[],
   settlementRows: { settlement_key: string }[]
 ): Group {
   return {
@@ -55,18 +78,21 @@ function assembleGroup(
         customReceivingMethod: parsed.custom,
       };
     }),
-    expenses: expenseRows.map((e) => ({
-      id: e.id,
-      description: e.description,
-      amount: e.amount,
-      paidBy: e.paid_by,
-      paymentMethod: (e.payment_method as PaymentMethod) || "cash",
-      splitAmong: e.split_among || [],
-      expenseDate: e.expense_date || undefined,
-      date: e.date,
-      adjustments: e.adjustments || undefined,
-      splitConfig: e.split_config || undefined,
-    })),
+    expenses: expenseRows.map((e) => {
+      const { adjustments, splitConfig } = decodeAdjustmentsColumn(e.adjustments);
+      return {
+        id: e.id,
+        description: e.description,
+        amount: e.amount,
+        paidBy: e.paid_by,
+        paymentMethod: (e.payment_method as PaymentMethod) || "cash",
+        splitAmong: e.split_among || [],
+        expenseDate: e.expense_date || undefined,
+        date: e.date,
+        adjustments,
+        splitConfig,
+      };
+    }),
     completedSettlements: settlementRows.map((s) => s.settlement_key),
     createdAt: groupRow.created_at,
     updatedAt: groupRow.updated_at,
@@ -186,7 +212,7 @@ export function useGroup(groupId: string) {
 
   const addExpense = useCallback(async (expense: Omit<Expense, "id">) => {
     const expenseId = nanoid(8);
-    const insertData: Record<string, unknown> = {
+    const { error } = await supabase.from("expenses").insert({
       id: expenseId,
       group_id: groupId,
       description: expense.description,
@@ -196,18 +222,14 @@ export function useGroup(groupId: string) {
       split_among: expense.splitAmong,
       expense_date: expense.expenseDate || null,
       date: expense.date,
-      adjustments: expense.adjustments?.length ? expense.adjustments : null,
-    };
-    if (expense.splitConfig?.mode && expense.splitConfig.mode !== "equal") {
-      insertData.split_config = expense.splitConfig;
-    }
-    const { error } = await supabase.from("expenses").insert(insertData);
+      adjustments: encodeAdjustmentsColumn(expense.adjustments, expense.splitConfig),
+    });
     if (error) throw new Error(error.message);
     await touchGroup();
   }, [groupId, touchGroup]);
 
   const updateExpense = useCallback(async (expenseId: string, expense: Omit<Expense, "id">) => {
-    const updateData: Record<string, unknown> = {
+    const { error } = await supabase.from("expenses").update({
       description: expense.description,
       amount: expense.amount,
       paid_by: expense.paidBy,
@@ -215,12 +237,8 @@ export function useGroup(groupId: string) {
       split_among: expense.splitAmong,
       expense_date: expense.expenseDate || null,
       date: expense.date,
-      adjustments: expense.adjustments?.length ? expense.adjustments : null,
-    };
-    if (expense.splitConfig?.mode && expense.splitConfig.mode !== "equal") {
-      updateData.split_config = expense.splitConfig;
-    }
-    const { error } = await supabase.from("expenses").update(updateData).eq("id", expenseId);
+      adjustments: encodeAdjustmentsColumn(expense.adjustments, expense.splitConfig),
+    }).eq("id", expenseId);
     if (error) throw new Error(error.message);
     await touchGroup();
   }, [touchGroup]);
