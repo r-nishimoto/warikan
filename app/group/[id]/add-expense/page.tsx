@@ -74,28 +74,35 @@ export default function AddExpensePage() {
     if (!description.trim() || !numAmount || !paidBy || splitAmong.length === 0) return;
 
     setSubmitting(true);
-    let splitConfig: SplitConfig | undefined;
-    if (splitMode === "ratio") {
-      const r: Record<string, number> = {};
-      splitAmong.forEach((mid) => { r[mid] = parseInt(ratios[mid] || "1", 10) || 1; });
-      splitConfig = { mode: "ratio", ratios: r };
-    } else if (splitMode === "fixed") {
-      const f: Record<string, number> = {};
-      splitAmong.forEach((mid) => { f[mid] = parseInt(fixedAmounts[mid] || "0", 10) || 0; });
-      splitConfig = { mode: "fixed", fixedAmounts: f };
+    try {
+      let splitConfig: SplitConfig | undefined;
+      if (splitMode === "ratio") {
+        const r: Record<string, number> = {};
+        splitAmong.forEach((mid) => { r[mid] = parseInt(ratios[mid] || "1", 10) || 1; });
+        splitConfig = { mode: "ratio", ratios: r };
+      } else if (splitMode === "fixed") {
+        const f: Record<string, number> = {};
+        splitAmong.forEach((mid) => { f[mid] = parseInt(fixedAmounts[mid] || "0", 10) || 0; });
+        splitConfig = { mode: "fixed", fixedAmounts: f };
+      }
+      await addExpense({
+        description: description.trim(),
+        amount: numAmount,
+        paidBy,
+        paymentMethod,
+        splitAmong,
+        expenseDate: expenseDate || undefined,
+        date: Date.now(),
+        adjustments: splitMode === "discount" ? parseAdjustments(adjustments) : undefined,
+        splitConfig,
+      });
+      router.push(`/group/${id}`);
+    } catch (e) {
+      console.error("Failed to add expense:", e);
+      alert("追加に失敗しました。もう一度お試しください。");
+    } finally {
+      setSubmitting(false);
     }
-    await addExpense({
-      description: description.trim(),
-      amount: numAmount,
-      paidBy,
-      paymentMethod,
-      splitAmong,
-      expenseDate: expenseDate || undefined,
-      date: Date.now(),
-      adjustments: splitMode === "discount" ? parseAdjustments(adjustments) : undefined,
-      splitConfig,
-    });
-    router.push(`/group/${id}`);
   }, [group, submitting, description, amount, paidBy, paymentMethod, splitAmong, expenseDate, adjustments, splitMode, ratios, fixedAmounts, addExpense, router, id]);
 
   if (loading) {

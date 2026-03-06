@@ -186,7 +186,7 @@ export function useGroup(groupId: string) {
 
   const addExpense = useCallback(async (expense: Omit<Expense, "id">) => {
     const expenseId = nanoid(8);
-    await supabase.from("expenses").insert({
+    const { error } = await supabase.from("expenses").insert({
       id: expenseId,
       group_id: groupId,
       description: expense.description,
@@ -199,6 +199,7 @@ export function useGroup(groupId: string) {
       adjustments: expense.adjustments?.length ? expense.adjustments : null,
       split_config: expense.splitConfig?.mode && expense.splitConfig.mode !== "equal" ? expense.splitConfig : null,
     });
+    if (error) throw new Error(error.message);
     await touchGroup();
   }, [groupId, touchGroup]);
 
