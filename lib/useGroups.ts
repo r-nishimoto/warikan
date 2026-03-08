@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "./supabase";
 import { Group } from "./types";
-import { nanoid } from "nanoid";
 import { getLocalGroupIds, addLocalGroupId, removeLocalGroupId, reorderLocalGroupIds } from "./useGroup";
 
 // ホーム画面用: ローカルレジストリに登録されたグループ一覧を取得
@@ -19,61 +17,33 @@ export function useGroups() {
       return;
     }
 
-    const [groupsRes, membersRes, expensesRes] = await Promise.all([
-      supabase.from("groups").select("*").in("id", ids),
-      supabase.from("members").select("*").in("group_id", ids),
-      supabase.from("expenses").select("*").in("group_id", ids),
-    ]);
+    try {
+      const res = await fetch("/api/groups/batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+      const data = await res.json();
+      const fetchedGroups: Group[] = data.groups || [];
+      const existingIds = new Set(data.existingIds || []);
 
-    const groupRows = groupsRes.data || [];
-    const memberRows = membersRes.data || [];
-    const expenseRows = expensesRes.data || [];
+      // DBに存在しないグループIDをレジストリから削除
+      ids.forEach((id) => {
+        if (!existingIds.has(id)) removeLocalGroupId(id);
+      });
 
-    // DBに存在しないグループIDをレジストリから削除
-    const existingIds = new Set(groupRows.map((g) => g.id));
-    ids.forEach((id) => {
-      if (!existingIds.has(id)) removeLocalGroupId(id);
-    });
+      // localStorageの配列順で並び替え
+      const idOrder = getLocalGroupIds();
+      fetchedGroups.sort((a, b) => {
+        const ai = idOrder.indexOf(a.id);
+        const bi = idOrder.indexOf(b.id);
+        return ai - bi;
+      });
 
-    const assembled: Group[] = groupRows.map((g) => ({
-      id: g.id,
-      name: g.name,
-      currency: g.currency,
-      members: memberRows
-        .filter((m) => m.group_id === g.id)
-        .map((m) => ({
-          id: m.id,
-          name: m.name,
-          preferredReceivingMethod: m.preferred_receiving_method || undefined,
-        })),
-      expenses: expenseRows
-        .filter((e) => e.group_id === g.id)
-        .map((e) => ({
-          id: e.id,
-          description: e.description,
-          amount: e.amount,
-          paidBy: e.paid_by,
-          paymentMethod: e.payment_method || "cash",
-          splitAmong: e.split_among || [],
-          expenseDate: e.expense_date || undefined,
-          date: e.date,
-          adjustments: e.adjustments || undefined,
-          splitConfig: e.split_config || undefined,
-        })),
-      completedSettlements: [],
-      createdAt: g.created_at,
-      updatedAt: g.updated_at,
-    }));
-
-    // localStorageの配列順で並び替え
-    const idOrder = getLocalGroupIds();
-    assembled.sort((a, b) => {
-      const ai = idOrder.indexOf(a.id);
-      const bi = idOrder.indexOf(b.id);
-      return ai - bi;
-    });
-
-    setGroups(assembled);
+      setGroups(fetchedGroups);
+    } catch {
+      setGroups([]);
+    }
     setLoading(false);
   }, []);
 
@@ -82,54 +52,21 @@ export function useGroups() {
   }, [fetchGroups]);
 
   const addGroup = useCallback(async (name: string, memberNames?: string[]): Promise<Group> => {
-    const groupId = nanoid(8);
-    const now = Date.now();
-    const { error } = await supabase.from("groups").insert({
-      id: groupId,
-      name,
-      currency: "JPY",
-      created_at: now,
-      updated_at: now,
+    const res = await fetch("/api/groups", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, memberNames }),
     });
-    if (error) {
-      console.error("Failed to create group:", error);
-      throw new Error("グループの作成に失敗しました");
-    }
+    if (!res.ok) throw new Error("グループの作成に失敗しました");
 
-    // メンバーも一括作成
-    const members: { id: string; name: string }[] = [];
-    if (memberNames && memberNames.length > 0) {
-      const memberRows = memberNames.map((mn) => {
-        const memberId = nanoid(6);
-        members.push({ id: memberId, name: mn });
-        return {
-          id: memberId,
-          group_id: groupId,
-          name: mn,
-          preferred_receiving_method: null,
-        };
-      });
-      await supabase.from("members").insert(memberRows);
-    }
-
-    addLocalGroupId(groupId);
-
-    const newGroup: Group = {
-      id: groupId,
-      name,
-      currency: "JPY",
-      members: members.map((m) => ({ id: m.id, name: m.name })),
-      expenses: [],
-      completedSettlements: [],
-      createdAt: now,
-      updatedAt: now,
-    };
+    const newGroup: Group = await res.json();
+    addLocalGroupId(newGroup.id);
     setGroups((prev) => [...prev, newGroup]);
     return newGroup;
   }, []);
 
   const deleteGroup = useCallback(async (groupId: string) => {
-    await supabase.from("groups").delete().eq("id", groupId);
+    await fetch(`/api/groups/${groupId}`, { method: "DELETE" });
     removeLocalGroupId(groupId);
     setGroups((prev) => prev.filter((g) => g.id !== groupId));
   }, []);
