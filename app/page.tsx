@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useLayoutEffect } from "react";
 import { useGroups } from "@/lib/useGroups";
 import { formatCurrency } from "@/lib/utils";
 import { LandingContent } from "@/components/LandingContent";
@@ -14,68 +14,63 @@ export default function Home() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   // ドラッグ&ドロップ状態
-  const [dragging, setDragging] = useState(false);
-  const dragIdRef = useRef<string | null>(null);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [targetIndex, setTargetIndex] = useState<number | null>(null);
+  const draggedElRef = useRef<HTMLDivElement | null>(null);
+  const prevDraggedElRef = useRef<HTMLDivElement | null>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStartY = useRef(0);
   const touchStartX = useRef(0);
+  const cardHeightRef = useRef(0);
+  const lastTargetRef = useRef<number | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const lastSwapTime = useRef(0);
+
+  const dragging = dragIndex !== null;
 
   // ドラッグ開始
-  const handleDragStart = useCallback((groupId: string) => {
-    dragIdRef.current = groupId;
-    setDragging(true);
+  const startDrag = useCallback((index: number, startY: number) => {
+    const list = listRef.current;
+    if (!list) return;
+    const children = Array.from(list.children) as HTMLDivElement[];
+    const rect = children[index]?.getBoundingClientRect();
+    const gap = 8; // gap-2
+    cardHeightRef.current = (rect?.height || 0) + gap;
+    draggedElRef.current = children[index];
+    touchStartY.current = startY;
+    lastTargetRef.current = index;
+    setDragIndex(index);
+    setTargetIndex(index);
     if (navigator.vibrate) navigator.vibrate(30);
   }, []);
 
-  const handleTouchStart = useCallback((e: React.TouchEvent, groupId: string) => {
+  const handleTouchStart = useCallback((e: React.TouchEvent, index: number) => {
     touchStartY.current = e.touches[0].clientY;
     touchStartX.current = e.touches[0].clientX;
     longPressTimer.current = setTimeout(() => {
-      handleDragStart(groupId);
+      startDrag(index, e.touches[0].clientY);
     }, 300);
-  }, [handleDragStart]);
+  }, [startDrag]);
 
-  const trySwap = useCallback((clientY: number) => {
-    const list = listRef.current;
-    const dragId = dragIdRef.current;
-    if (!list || !dragId) return;
+  // ドラッグ位置更新（指追従 + ターゲット計算）
+  const updateDragPosition = useCallback((clientY: number) => {
+    if (dragIndex === null) return;
+    const offsetY = clientY - touchStartY.current;
 
-    const now = Date.now();
-    if (now - lastSwapTime.current < 150) return;
-
-    const children = Array.from(list.children) as HTMLElement[];
-    const dragIdx = groups.findIndex((g) => g.id === dragId);
-    if (dragIdx === -1) return;
-
-    const dragRect = children[dragIdx]?.getBoundingClientRect();
-    if (!dragRect) return;
-
-    if (dragIdx > 0) {
-      const aboveRect = children[dragIdx - 1]?.getBoundingClientRect();
-      if (aboveRect && clientY < aboveRect.top + aboveRect.height / 2) {
-        const newIds = groups.map((g) => g.id);
-        [newIds[dragIdx - 1], newIds[dragIdx]] = [newIds[dragIdx], newIds[dragIdx - 1]];
-        reorderGroups(newIds);
-        lastSwapTime.current = now;
-        if (navigator.vibrate) navigator.vibrate(15);
-        return;
-      }
+    // ドラッグ中のカードを指に追従（直接DOM操作で60fps）
+    if (draggedElRef.current) {
+      draggedElRef.current.style.transform = `translateY(${offsetY}px) scale(1.03)`;
     }
 
-    if (dragIdx < groups.length - 1) {
-      const belowRect = children[dragIdx + 1]?.getBoundingClientRect();
-      if (belowRect && clientY > belowRect.top + belowRect.height / 2) {
-        const newIds = groups.map((g) => g.id);
-        [newIds[dragIdx], newIds[dragIdx + 1]] = [newIds[dragIdx + 1], newIds[dragIdx]];
-        reorderGroups(newIds);
-        lastSwapTime.current = now;
-        if (navigator.vibrate) navigator.vibrate(15);
-        return;
-      }
+    // ターゲット位置を計算
+    let newTarget = dragIndex + Math.round(offsetY / cardHeightRef.current);
+    newTarget = Math.max(0, Math.min(groups.length - 1, newTarget));
+
+    if (newTarget !== lastTargetRef.current) {
+      lastTargetRef.current = newTarget;
+      setTargetIndex(newTarget);
+      if (navigator.vibrate) navigator.vibrate(10);
     }
-  }, [groups, reorderGroups]);
+  }, [dragIndex, groups.length]);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (!dragging) {
@@ -90,29 +85,68 @@ export default function Home() {
       return;
     }
     e.preventDefault();
-    trySwap(e.touches[0].clientY);
-  }, [dragging, trySwap]);
+    updateDragPosition(e.touches[0].clientY);
+  }, [dragging, updateDragPosition]);
 
   const handleDrop = useCallback(() => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
     }
-    dragIdRef.current = null;
-    setDragging(false);
-  }, []);
+
+    // useLayoutEffectでDOM更新後にtransformを消すためにrefを退避
+    prevDraggedElRef.current = draggedElRef.current;
+    draggedElRef.current = null;
+
+    // 位置が変わった場合のみ並び替え
+    if (dragIndex !== null && targetIndex !== null && dragIndex !== targetIndex) {
+      const newIds = groups.map((g) => g.id);
+      const [moved] = newIds.splice(dragIndex, 1);
+      newIds.splice(targetIndex, 0, moved);
+      reorderGroups(newIds);
+    }
+
+    setDragIndex(null);
+    setTargetIndex(null);
+    lastTargetRef.current = null;
+  }, [dragIndex, targetIndex, groups, reorderGroups]);
 
   const handleTouchCancel = useCallback(() => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
     }
-    dragIdRef.current = null;
-    setDragging(false);
+    if (draggedElRef.current) {
+      draggedElRef.current.style.transform = "";
+      draggedElRef.current = null;
+    }
+    setDragIndex(null);
+    setTargetIndex(null);
+    lastTargetRef.current = null;
   }, []);
 
+  // カードシフトスタイル計算
+  const getCardShiftStyle = (i: number): React.CSSProperties => {
+    if (dragIndex === null || targetIndex === null) return {};
+    if (i === dragIndex) {
+      return { position: "relative", zIndex: 50 };
+    }
+    const shift = cardHeightRef.current;
+    let translateY = 0;
+    if (dragIndex < targetIndex) {
+      if (i > dragIndex && i <= targetIndex) translateY = -shift;
+    } else if (dragIndex > targetIndex) {
+      if (i >= targetIndex && i < dragIndex) translateY = shift;
+    }
+    return {
+      transform: `translateY(${translateY}px)`,
+      transition: "transform 200ms cubic-bezier(0.25, 1, 0.5, 1)",
+    };
+  };
+
+  // ドラッグ中のスクロールロック
   useEffect(() => {
-    if (!dragging) return;
+    if (dragIndex === null) return;
 
     const scrollY = window.scrollY;
     const body = document.body;
@@ -138,7 +172,15 @@ export default function Home() {
       window.scrollTo(0, scrollY);
       document.removeEventListener("touchmove", prevent);
     };
-  }, [dragging]);
+  }, [dragIndex]);
+
+  // DOM更新後にドラッグカードのtransformをクリア（フラッシュ防止）
+  useLayoutEffect(() => {
+    if (dragIndex === null && prevDraggedElRef.current) {
+      prevDraggedElRef.current.style.transform = "";
+      prevDraggedElRef.current = null;
+    }
+  }, [dragIndex]);
 
   return (
     <div className="p-6">
@@ -184,18 +226,21 @@ export default function Home() {
         <div className="mb-8">
           <h2 className="text-sm font-medium text-zinc-400 mb-3">最近のグループ</h2>
           <div ref={listRef} className="flex flex-col gap-2">
-            {groups.map((group) => {
-              const isDragging = dragging && dragIdRef.current === group.id;
+            {groups.map((group, index) => {
+              const isDragging = dragIndex === index;
 
               return (
                 <div
                   key={group.id}
-                  className={`bg-zinc-900 rounded-xl border p-4 select-none transition-all duration-150 ${
+                  style={getCardShiftStyle(index)}
+                  className={`bg-zinc-900 rounded-xl border p-4 select-none ${
                     isDragging
-                      ? "border-blue-400 scale-[0.95] shadow-lg shadow-blue-500/20 opacity-80"
-                      : "border-zinc-800"
+                      ? "border-blue-400 shadow-xl shadow-blue-500/25 will-change-transform"
+                      : dragging
+                        ? "border-zinc-800 will-change-transform"
+                        : "border-zinc-800"
                   }`}
-                  onTouchStart={(e) => handleTouchStart(e, group.id)}
+                  onTouchStart={(e) => handleTouchStart(e, index)}
                   onTouchMove={handleTouchMove}
                   onTouchEnd={handleDrop}
                   onTouchCancel={handleTouchCancel}
@@ -205,7 +250,8 @@ export default function Home() {
                       className="flex items-center gap-3 text-zinc-600 cursor-grab active:cursor-grabbing pr-2 touch-none"
                       onMouseDown={(e) => {
                         e.preventDefault();
-                        handleDragStart(group.id);
+                        touchStartY.current = e.clientY;
+                        startDrag(index, e.clientY);
                       }}
                     >
                       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="flex-shrink-0">
@@ -287,8 +333,8 @@ export default function Home() {
       {/* マウスドラッグ用グローバルイベント */}
       {dragging && (
         <div
-          className="fixed inset-0 z-50 cursor-grabbing"
-          onMouseMove={(e) => trySwap(e.clientY)}
+          className="fixed inset-0 z-40 cursor-grabbing"
+          onMouseMove={(e) => updateDragPosition(e.clientY)}
           onMouseUp={handleDrop}
         />
       )}
