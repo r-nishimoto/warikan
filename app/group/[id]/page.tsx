@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useGroup } from "@/lib/useGroup";
-import { formatCurrency, formatNumberWithCommas, removeCommas } from "@/lib/utils";
+import { formatCurrency, formatNumberWithCommas, removeCommas, getMemberColor } from "@/lib/utils";
 import { Adjustment, Expense, PaymentMethod, PAYMENT_METHODS, RECEIVING_METHODS, RoundingUnit, ROUNDING_UNITS, SplitMode, SplitConfig } from "@/lib/types";
 import { calculateMemberShares, calculateSettlements } from "@/lib/settlement";
 
@@ -201,6 +201,10 @@ export default function GroupPage() {
     );
   }
 
+  // メンバーカラーマップ
+  const memberColorMap = new Map<string, ReturnType<typeof getMemberColor>>();
+  group.members.forEach((m, i) => memberColorMap.set(m.id, getMemberColor(i)));
+
   const totalExpenses = group.expenses.reduce((sum, e) => sum + e.amount, 0);
   const isEditValid =
     editDesc.trim() &&
@@ -283,14 +287,17 @@ export default function GroupPage() {
           </Link>
         </div>
         <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-          {group.members.map((member) => (
-            <span
-              key={member.id}
-              className="text-xs text-zinc-400 bg-zinc-800 rounded-md px-2 py-0.5"
-            >
-              {member.name}
-            </span>
-          ))}
+          {group.members.map((member) => {
+            const color = memberColorMap.get(member.id);
+            return (
+              <span
+                key={member.id}
+                className={`text-xs rounded-md px-2 py-0.5 ${color?.bg || "bg-zinc-800"} ${color?.text || "text-zinc-400"}`}
+              >
+                {member.name}
+              </span>
+            );
+          })}
           {group.members.length === 0 && (
             <Link href={`/group/${group.id}/edit`} className="text-sm text-blue-400">
               メンバーを追加
@@ -709,41 +716,45 @@ export default function GroupPage() {
                   );
                 }
 
+                const payerColor = payer ? memberColorMap.get(payer.id) : undefined;
+                const hasSplitTag = expense.splitConfig?.mode === "ratio" || expense.splitConfig?.mode === "fixed" || (expense.adjustments && expense.adjustments.length > 0);
+
                 return (
                   <div
                     key={expense.id}
-                    className="bg-zinc-900 rounded-xl border border-zinc-800 p-4 flex items-center justify-between cursor-pointer active:bg-zinc-800"
+                    className="bg-zinc-900 rounded-xl border border-zinc-800 p-4 cursor-pointer active:bg-zinc-800/80 transition-colors"
                     onClick={() => startEditing(expense)}
                   >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-medium text-sm truncate">{expense.description}</span>
-                        <svg className="w-3 h-3 text-zinc-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                        </svg>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-semibold text-[15px] truncate">{expense.description}</span>
+                          <svg className="w-3 h-3 text-zinc-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-1 text-xs text-zinc-500">
+                          {expense.expenseDate && <span>{expense.expenseDate}</span>}
+                          {expense.expenseDate && <span className="text-zinc-700">·</span>}
+                          <span className={payerColor?.text || "text-zinc-400"}>{payer?.name || "不明"}</span>
+                          <span className="text-zinc-700">·</span>
+                          <span>{PAYMENT_METHODS.find((m) => m.value === expense.paymentMethod)?.label || "現金"}</span>
+                        </div>
                       </div>
-                      <div className="text-xs text-zinc-500 mt-0.5">
-                        {expense.expenseDate && `${expense.expenseDate} ・ `}
-                        {payer?.name || "不明"}が立て替え ・{" "}
-                        {PAYMENT_METHODS.find((m) => m.value === expense.paymentMethod)?.label || "現金"}
-                        {expense.splitConfig?.mode === "ratio" && (
-                          <span className="text-purple-400"> ・ 比率割り</span>
-                        )}
-                        {expense.splitConfig?.mode === "fixed" && (
-                          <span className="text-purple-400"> ・ 金額指定</span>
-                        )}
-                        {expense.adjustments && expense.adjustments.length > 0 && (
-                          <span className="text-orange-400"> ・ 割引あり</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1 mt-1.5">
+                      <span className="font-bold text-lg tabular-nums flex-shrink-0 mt-0.5">
+                        {formatCurrency(expense.amount)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between mt-2">
+                      <div className="flex items-center gap-1">
                         {expense.splitAmong.map((memberId) => {
                           const member = group.members.find((m) => m.id === memberId);
+                          const color = memberColorMap.get(memberId);
                           const initial = member?.name?.charAt(0) || "?";
                           return (
                             <span
                               key={memberId}
-                              className="w-5 h-5 rounded-full bg-zinc-700 text-zinc-300 text-[10px] font-medium flex items-center justify-center"
+                              className={`w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center ${color?.bg || "bg-zinc-700"} ${color?.text || "text-zinc-300"}`}
                               title={member?.name}
                             >
                               {initial}
@@ -751,10 +762,20 @@ export default function GroupPage() {
                           );
                         })}
                       </div>
+                      {hasSplitTag && (
+                        <div className="flex items-center gap-1">
+                          {expense.splitConfig?.mode === "ratio" && (
+                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-400">比率</span>
+                          )}
+                          {expense.splitConfig?.mode === "fixed" && (
+                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-400">金額指定</span>
+                          )}
+                          {expense.adjustments && expense.adjustments.length > 0 && (
+                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-400">割引</span>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <span className="font-semibold text-sm flex-shrink-0 ml-3">
-                      {formatCurrency(expense.amount)}
-                    </span>
                   </div>
                 );
               })}
