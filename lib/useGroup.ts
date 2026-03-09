@@ -72,11 +72,15 @@ export function useGroup(groupId: string) {
   // --- Mutations (全てAPI Route経由) ---
 
   const addMember = useCallback(async (name: string) => {
-    await fetch(`/api/groups/${groupId}/members`, {
+    const res = await fetch(`/api/groups/${groupId}/members`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name }),
     });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || "メンバーの追加に失敗しました");
+    }
     await fetchGroup();
   }, [groupId, fetchGroup]);
 

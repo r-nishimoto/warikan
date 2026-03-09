@@ -46,13 +46,14 @@ export default function GroupPage() {
   const [newMemberName, setNewMemberName] = useState("");
   const [newMemberComposing, setNewMemberComposing] = useState(false);
   const [memberError, setMemberError] = useState("");
+  const [addingMember, setAddingMember] = useState(false);
 
   // 確認ダイアログ
   type ConfirmAction = { type: "deleteMember"; id: string; name: string } | { type: "deleteExpense"; id: string; name: string } | { type: "resetGroup" };
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
 
   const handleAddMember = useCallback(async () => {
-    if (!newMemberName.trim() || !group) return;
+    if (!newMemberName.trim() || !group || addingMember) return;
     const trimmed = newMemberName.trim();
     if (group.members.some((m) => m.name === trimmed)) {
       setMemberError("名前が重複しています");
@@ -60,9 +61,17 @@ export default function GroupPage() {
       return;
     }
     setMemberError("");
-    await addMember(trimmed);
-    setNewMemberName("");
-  }, [newMemberName, group, addMember]);
+    setAddingMember(true);
+    try {
+      await addMember(trimmed);
+      setNewMemberName("");
+    } catch (e) {
+      setMemberError(e instanceof Error ? e.message : "追加に失敗しました");
+      setTimeout(() => setMemberError(""), 3000);
+    } finally {
+      setAddingMember(false);
+    }
+  }, [newMemberName, group, addMember, addingMember]);
 
   // 編集モード
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -411,10 +420,10 @@ export default function GroupPage() {
               />
               <button
                 onClick={handleAddMember}
-                disabled={!newMemberName.trim()}
+                disabled={!newMemberName.trim() || addingMember}
                 className="px-4 py-2 bg-blue-500 text-white rounded-lg font-medium text-xs disabled:opacity-30 active:bg-blue-600"
               >
-                追加
+                {addingMember ? "追加中..." : "追加"}
               </button>
             </div>
             {memberError && <p className="text-rose-400 text-xs">{memberError}</p>}
