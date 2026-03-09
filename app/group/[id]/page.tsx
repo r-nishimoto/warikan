@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useGroup } from "@/lib/useGroup";
 import { formatCurrency, formatNumberWithCommas, removeCommas, getMemberColor } from "@/lib/utils";
-import { Adjustment, Expense, PaymentMethod, PAYMENT_METHODS, RECEIVING_METHODS, RoundingUnit, ROUNDING_UNITS, SplitMode, SplitConfig } from "@/lib/types";
+import { Adjustment, Expense, PaymentMethod, PAYMENT_METHODS, ReceivingMethod, RECEIVING_METHODS, RoundingUnit, ROUNDING_UNITS, SplitMode, SplitConfig } from "@/lib/types";
 import { calculateMemberShares, calculateSettlements } from "@/lib/settlement";
 
 export default function GroupPage() {
@@ -18,6 +18,10 @@ export default function GroupPage() {
     removeExpense,
     resetGroupExpenses,
     toggleSettlementCompleted,
+    addMember,
+    removeMember,
+    updateMemberPreference,
+    updateGroupName,
   } = useGroup(id);
 
   // 共有URL
@@ -32,6 +36,28 @@ export default function GroupPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   type DetailTab = "balance" | "spending";
   const [detailTab, setDetailTab] = useState<DetailTab>("balance");
+
+  // グループ設定（インライン編集）
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [editingGroupName, setEditingGroupName] = useState(false);
+  const [groupNameInput, setGroupNameInput] = useState("");
+  const [groupNameComposing, setGroupNameComposing] = useState(false);
+  const [newMemberName, setNewMemberName] = useState("");
+  const [newMemberComposing, setNewMemberComposing] = useState(false);
+  const [memberError, setMemberError] = useState("");
+
+  const handleAddMember = useCallback(async () => {
+    if (!newMemberName.trim() || !group) return;
+    const trimmed = newMemberName.trim();
+    if (group.members.some((m) => m.name === trimmed)) {
+      setMemberError("名前が重複しています");
+      setTimeout(() => setMemberError(""), 3000);
+      return;
+    }
+    setMemberError("");
+    await addMember(trimmed);
+    setNewMemberName("");
+  }, [newMemberName, group, addMember]);
 
   // 編集モード
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -276,15 +302,57 @@ export default function GroupPage() {
       {/* ヘッダーカード */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 mb-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold truncate">{group.name}</h1>
-          <Link
-            href={`/group/${group.id}/edit`}
-            className="p-1.5 text-zinc-500 hover:text-zinc-300 active:text-zinc-300 flex-shrink-0"
+          {editingGroupName ? (
+            <div className="flex gap-2 flex-1 mr-2">
+              <input
+                type="text"
+                value={groupNameInput}
+                onChange={(e) => setGroupNameInput(e.target.value)}
+                onCompositionStart={() => setGroupNameComposing(true)}
+                onCompositionEnd={() => setGroupNameComposing(false)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") setEditingGroupName(false);
+                  if (e.key === "Enter" && !groupNameComposing && groupNameInput.trim()) {
+                    updateGroupName(groupNameInput.trim());
+                    setEditingGroupName(false);
+                  }
+                }}
+                className="flex-1 px-3 py-1.5 border border-zinc-700 bg-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
+                autoFocus
+              />
+              <button
+                onClick={() => {
+                  if (groupNameInput.trim()) {
+                    updateGroupName(groupNameInput.trim());
+                    setEditingGroupName(false);
+                  }
+                }}
+                className="px-3 py-1.5 text-xs bg-blue-500 text-white rounded-lg"
+              >
+                保存
+              </button>
+            </div>
+          ) : (
+            <h1
+              className="text-xl font-bold truncate cursor-pointer active:text-zinc-300"
+              onClick={() => { setGroupNameInput(group.name); setEditingGroupName(true); }}
+            >
+              {group.name}
+            </h1>
+          )}
+          <button
+            onClick={() => setSettingsOpen((prev) => !prev)}
+            className={`p-1.5 flex-shrink-0 transition-colors ${settingsOpen ? "text-blue-400" : "text-zinc-500 active:text-zinc-300"}`}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              {settingsOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              )}
+              {!settingsOpen && <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />}
             </svg>
-          </Link>
+          </button>
         </div>
         <div className="flex flex-wrap items-center gap-1.5 mt-2">
           {group.members.map((member) => {
@@ -299,29 +367,113 @@ export default function GroupPage() {
             );
           })}
           {group.members.length === 0 && (
-            <Link href={`/group/${group.id}/edit`} className="text-sm text-blue-400">
+            <button onClick={() => setSettingsOpen(true)} className="text-sm text-blue-400">
               メンバーを追加
-            </Link>
+            </button>
           )}
         </div>
-        {/* 招待URL */}
-        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-zinc-800">
-          <div className="flex-1 min-w-0 text-xs text-zinc-500 truncate">
-            {groupUrl}
+
+        {/* インライン設定パネル */}
+        {settingsOpen && (
+          <div className="mt-3 pt-3 border-t border-zinc-800 space-y-3">
+            {/* メンバー追加 */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newMemberName}
+                onChange={(e) => setNewMemberName(e.target.value)}
+                onCompositionStart={() => setNewMemberComposing(true)}
+                onCompositionEnd={() => setNewMemberComposing(false)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !newMemberComposing) handleAddMember();
+                }}
+                placeholder="メンバー名を入力"
+                className="flex-1 px-3 py-2 border border-zinc-700 bg-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-zinc-500"
+              />
+              <button
+                onClick={handleAddMember}
+                disabled={!newMemberName.trim()}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg font-medium text-xs disabled:opacity-30 active:bg-blue-600"
+              >
+                追加
+              </button>
+            </div>
+            {memberError && <p className="text-rose-400 text-xs">{memberError}</p>}
+
+            {/* メンバー一覧 */}
+            {group.members.length > 0 && (
+              <div className="space-y-1.5">
+                {group.members.map((member) => {
+                  const color = memberColorMap.get(member.id);
+                  const isOther = member.preferredReceivingMethod === "other";
+                  return (
+                    <div key={member.id} className="bg-zinc-800/50 rounded-lg px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center flex-shrink-0 ${color?.bg || "bg-zinc-700"} ${color?.text || "text-zinc-300"}`}>
+                          {member.name.charAt(0)}
+                        </span>
+                        <span className="flex-1 font-medium text-sm truncate">{member.name}</span>
+                        <select
+                          value={member.preferredReceivingMethod || "any"}
+                          onChange={(e) => {
+                            const val = e.target.value as ReceivingMethod;
+                            updateMemberPreference(member.id, val, val === "other" ? (member.customReceivingMethod || "") : undefined);
+                          }}
+                          className="text-[11px] bg-zinc-800 border border-zinc-700 rounded px-1.5 py-1 text-zinc-400"
+                        >
+                          {RECEIVING_METHODS.map((rm) => (
+                            <option key={rm.value} value={rm.value}>{rm.label}</option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`「${member.name}」を削除しますか？`)) {
+                              removeMember(member.id);
+                            }
+                          }}
+                          className="text-zinc-600 hover:text-rose-400 active:text-rose-400 text-sm flex-shrink-0"
+                        >
+                          ×
+                        </button>
+                      </div>
+                      {isOther && (
+                        <input
+                          type="text"
+                          defaultValue={member.customReceivingMethod || ""}
+                          placeholder="受取方法の詳細"
+                          onBlur={(e) => updateMemberPreference(member.id, "other", e.target.value)}
+                          onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                          className="mt-1.5 ml-8 w-[calc(100%-2rem)] px-2 py-1 text-xs bg-zinc-800 border border-zinc-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-zinc-600"
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-          <button
-            onClick={handleCopyUrl}
-            className="flex-shrink-0 px-2.5 py-1.5 bg-zinc-800 text-zinc-300 rounded-lg text-xs font-medium active:bg-zinc-700"
-          >
-            {urlCopied ? "✓" : "コピー"}
-          </button>
-          <button
-            onClick={handleShare}
-            className="flex-shrink-0 px-2.5 py-1.5 bg-blue-500 text-white rounded-lg text-xs font-medium active:bg-blue-600"
-          >
-            共有
-          </button>
-        </div>
+        )}
+
+        {/* 招待URL */}
+        {!settingsOpen && (
+          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-zinc-800">
+            <div className="flex-1 min-w-0 text-xs text-zinc-500 truncate">
+              {groupUrl}
+            </div>
+            <button
+              onClick={handleCopyUrl}
+              className="flex-shrink-0 px-2.5 py-1.5 bg-zinc-800 text-zinc-300 rounded-lg text-xs font-medium active:bg-zinc-700"
+            >
+              {urlCopied ? "✓" : "コピー"}
+            </button>
+            <button
+              onClick={handleShare}
+              className="flex-shrink-0 px-2.5 py-1.5 bg-blue-500 text-white rounded-lg text-xs font-medium active:bg-blue-600"
+            >
+              共有
+            </button>
+          </div>
+        )}
       </div>
 
       {/* FAB: 立て替えを追加 */}
