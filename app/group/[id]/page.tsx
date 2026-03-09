@@ -505,19 +505,6 @@ export default function GroupPage() {
         </Link>
       )}
 
-      {/* 上部: 立て替えを追加ボタン */}
-      {group.members.length >= 2 && (
-        <Link
-          href={`/group/${group.id}/add-expense`}
-          className="flex items-center justify-center gap-2 py-3 mb-6 border border-zinc-700 border-dashed text-zinc-400 rounded-xl font-medium text-sm active:bg-zinc-800/50 active:text-zinc-300 transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          立て替えを追加
-        </Link>
-      )}
-
       {/* 空状態ガイド */}
       {group.expenses.length === 0 && group.members.length >= 2 && (
         <div className="text-center py-4 mb-6">

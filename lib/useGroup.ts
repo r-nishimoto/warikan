@@ -117,12 +117,29 @@ export function useGroup(groupId: string) {
   }, [groupId, fetchGroup]);
 
   const toggleSettlementCompleted = useCallback(async (key: string) => {
-    await fetch(`/api/groups/${groupId}/settlements`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key }),
+    // 楽観的更新: UIを即座に反映
+    setGroup((prev) => {
+      if (!prev) return prev;
+      const completed = prev.completedSettlements || [];
+      const isCompleted = completed.includes(key);
+      return {
+        ...prev,
+        completedSettlements: isCompleted
+          ? completed.filter((k) => k !== key)
+          : [...completed, key],
+      };
     });
-    await fetchGroup();
+    // バックグラウンドでAPI同期
+    try {
+      await fetch(`/api/groups/${groupId}/settlements`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key }),
+      });
+    } catch {
+      // 失敗時はサーバーから再取得して整合性を保つ
+      await fetchGroup();
+    }
   }, [groupId, fetchGroup]);
 
   const resetGroupExpenses = useCallback(async () => {
