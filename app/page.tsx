@@ -4,10 +4,14 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useGroups } from "@/lib/useGroups";
 import { formatCurrency } from "@/lib/utils";
 import { LandingContent } from "@/components/LandingContent";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import Link from "next/link";
 
 export default function Home() {
   const { groups, loading, deleteGroup, reorderGroups } = useGroups();
+
+  // 削除確認モーダル
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   // ドラッグ&ドロップ状態
   const [dragging, setDragging] = useState(false);
@@ -251,11 +255,7 @@ export default function Home() {
                       </div>
                     </Link>
                     <button
-                      onClick={() => {
-                        if (window.confirm(`「${group.name}」を本当に削除しますか？`)) {
-                          deleteGroup(group.id);
-                        }
-                      }}
+                      onClick={() => setDeleteTarget({ id: group.id, name: group.name })}
                       aria-label={`${group.name}を削除`}
                       className="ml-1 w-10 h-10 flex items-center justify-center text-zinc-600 hover:text-rose-400 active:text-rose-400 flex-shrink-0 rounded-lg"
                     >
@@ -292,6 +292,20 @@ export default function Home() {
           onMouseUp={handleDrop}
         />
       )}
+
+      {/* 削除確認モーダル */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title={`「${deleteTarget?.name}」を削除しますか？`}
+        description="グループとすべての支出データが削除されます。この操作は元に戻せません。"
+        confirmLabel="削除する"
+        destructive
+        onConfirm={() => {
+          if (deleteTarget) deleteGroup(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "旅行やイベントの割り勘計算をスムーズに",
     start_url: "/",
     display: "standalone",
-    background_color: "#f8fafc",
-    theme_color: "#3b82f6",
+    background_color: "#09090b",
+    theme_color: "#09090b",
     icons: [
       {
         src: "/icon.svg",

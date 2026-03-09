@@ -7,6 +7,7 @@ import { useGroup } from "@/lib/useGroup";
 import { formatCurrency, formatNumberWithCommas, removeCommas, getMemberColor } from "@/lib/utils";
 import { Adjustment, Expense, PaymentMethod, PAYMENT_METHODS, ReceivingMethod, RECEIVING_METHODS, RoundingUnit, ROUNDING_UNITS, SplitMode, SplitConfig } from "@/lib/types";
 import { calculateMemberShares, calculateSettlements } from "@/lib/settlement";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 export default function GroupPage() {
   const { id } = useParams<{ id: string }>();
@@ -46,6 +47,10 @@ export default function GroupPage() {
   const [newMemberComposing, setNewMemberComposing] = useState(false);
   const [memberError, setMemberError] = useState("");
 
+  // 確認ダイアログ
+  type ConfirmAction = { type: "deleteMember"; id: string; name: string } | { type: "deleteExpense"; id: string; name: string } | { type: "resetGroup" };
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
+
   const handleAddMember = useCallback(async () => {
     if (!newMemberName.trim() || !group) return;
     const trimmed = newMemberName.trim();
@@ -78,6 +83,7 @@ export default function GroupPage() {
   // 調整（Edit form）
   type AdjustmentInput = { memberIds: string[]; amount: string; memo: string };
   const [editAdjustments, setEditAdjustments] = useState<AdjustmentInput[]>([]);
+  const [saving, setSaving] = useState(false);
 
   const startEditing = (expense: Expense) => {
     setEditingId(expense.id);
@@ -124,32 +130,37 @@ export default function GroupPage() {
   };
 
   const handleSaveEdit = useCallback(async () => {
-    if (!group || !editingId) return;
+    if (!group || !editingId || saving) return;
     const numAmount = parseInt(editAmount, 10);
     if (!editDesc.trim() || !numAmount || !editPaidBy || editSplitAmong.length === 0) return;
-    let splitConfig: SplitConfig | undefined;
-    if (editSplitMode === "ratio") {
-      const r: Record<string, number> = {};
-      editSplitAmong.forEach((mid) => { r[mid] = parseInt(editRatios[mid] || "1", 10) || 1; });
-      splitConfig = { mode: "ratio", ratios: r };
-    } else if (editSplitMode === "fixed") {
-      const f: Record<string, number> = {};
-      editSplitAmong.forEach((mid) => { f[mid] = parseInt(editFixedAmounts[mid] || "0", 10) || 0; });
-      splitConfig = { mode: "fixed", fixedAmounts: f };
+    setSaving(true);
+    try {
+      let splitConfig: SplitConfig | undefined;
+      if (editSplitMode === "ratio") {
+        const r: Record<string, number> = {};
+        editSplitAmong.forEach((mid) => { r[mid] = parseInt(editRatios[mid] || "1", 10) || 1; });
+        splitConfig = { mode: "ratio", ratios: r };
+      } else if (editSplitMode === "fixed") {
+        const f: Record<string, number> = {};
+        editSplitAmong.forEach((mid) => { f[mid] = parseInt(editFixedAmounts[mid] || "0", 10) || 0; });
+        splitConfig = { mode: "fixed", fixedAmounts: f };
+      }
+      await updateExpense(editingId, {
+        description: editDesc.trim(),
+        amount: numAmount,
+        paidBy: editPaidBy,
+        paymentMethod: editPaymentMethod,
+        splitAmong: editSplitAmong,
+        expenseDate: editExpenseDate || undefined,
+        date: Date.now(),
+        adjustments: editSplitMode === "discount" ? parseAdjustments(editAdjustments) : undefined,
+        splitConfig,
+      });
+      setEditingId(null);
+    } finally {
+      setSaving(false);
     }
-    await updateExpense(editingId, {
-      description: editDesc.trim(),
-      amount: numAmount,
-      paidBy: editPaidBy,
-      paymentMethod: editPaymentMethod,
-      splitAmong: editSplitAmong,
-      expenseDate: editExpenseDate || undefined,
-      date: Date.now(),
-      adjustments: editSplitMode === "discount" ? parseAdjustments(editAdjustments) : undefined,
-      splitConfig,
-    });
-    setEditingId(null);
-  }, [group, editingId, editDesc, editAmount, editPaidBy, editPaymentMethod, editSplitAmong, editExpenseDate, editAdjustments, editSplitMode, editRatios, editFixedAmounts, updateExpense]);
+  }, [group, editingId, saving, editDesc, editAmount, editPaidBy, editPaymentMethod, editSplitAmong, editExpenseDate, editAdjustments, editSplitMode, editRatios, editFixedAmounts, updateExpense]);
 
   const toggleEditSplitMember = (memberId: string) => {
     setEditSplitAmong((prev) => {
@@ -342,9 +353,10 @@ export default function GroupPage() {
           )}
           <button
             onClick={() => setSettingsOpen((prev) => !prev)}
-            className={`p-1.5 flex-shrink-0 transition-colors ${settingsOpen ? "text-blue-400" : "text-zinc-500 active:text-zinc-300"}`}
+            aria-label={settingsOpen ? "設定を閉じる" : "グループ設定"}
+            className={`p-2.5 -mr-1 flex-shrink-0 transition-colors ${settingsOpen ? "text-blue-400" : "text-zinc-500 active:text-zinc-300"}`}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               {settingsOpen ? (
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               ) : (
@@ -426,12 +438,9 @@ export default function GroupPage() {
                           ))}
                         </select>
                         <button
-                          onClick={() => {
-                            if (window.confirm(`「${member.name}」を削除しますか？`)) {
-                              removeMember(member.id);
-                            }
-                          }}
-                          className="text-zinc-600 hover:text-rose-400 active:text-rose-400 text-sm flex-shrink-0"
+                          onClick={() => setConfirmAction({ type: "deleteMember", id: member.id, name: member.name })}
+                          aria-label={`${member.name}を削除`}
+                          className="text-zinc-600 hover:text-rose-400 active:text-rose-400 text-sm flex-shrink-0 w-8 h-8 flex items-center justify-center"
                         >
                           ×
                         </button>
@@ -480,7 +489,7 @@ export default function GroupPage() {
       {group.members.length >= 2 && (
         <Link
           href={`/group/${group.id}/add-expense`}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-[calc(448px-3rem)] z-50 flex items-center justify-center gap-2 py-3.5 bg-blue-500 text-white rounded-2xl font-medium shadow-lg shadow-blue-500/25 active:bg-blue-600 active:scale-[0.98] transition-transform"
+          className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-[calc(448px-3rem)] z-50 flex items-center justify-center gap-2 py-3.5 bg-blue-500 text-white rounded-2xl font-medium shadow-lg shadow-blue-500/25 active:bg-blue-600 active:scale-[0.98] transition-transform"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -848,20 +857,15 @@ export default function GroupPage() {
                         </button>
                         <button
                           onClick={handleSaveEdit}
-                          disabled={!isEditValid}
+                          disabled={!isEditValid || saving}
                           className="flex-1 py-2.5 bg-blue-500 text-white rounded-xl font-medium text-sm disabled:opacity-30 active:bg-blue-600"
                         >
-                          保存
+                          {saving ? "保存中..." : "保存"}
                         </button>
                       </div>
 
                       <button
-                        onClick={() => {
-                          if (window.confirm(`「${editDesc}」を本当に削除しますか？`)) {
-                            removeExpense(expense.id);
-                            cancelEditing();
-                          }
-                        }}
+                        onClick={() => setConfirmAction({ type: "deleteExpense", id: expense.id, name: editDesc })}
                         className="w-full py-2 text-xs text-rose-400 active:text-rose-300"
                       >
                         この支出を削除する
@@ -999,13 +1003,14 @@ export default function GroupPage() {
                   >
                     <button
                       onClick={() => toggleSettlementCompleted(key)}
-                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                      aria-label={`${getMemberName(s.from)}→${getMemberName(s.to)}の精算を${isCompleted ? "未完了に戻す" : "完了にする"}`}
+                      className={`w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
                         isCompleted
                           ? "bg-emerald-500 border-emerald-500 text-white"
                           : "border-zinc-600 text-transparent hover:border-zinc-500"
                       }`}
                     >
-                      <span className="text-xs">✓</span>
+                      <span className="text-sm">✓</span>
                     </button>
                     <div className="flex-1 min-w-0">
                       <div className={`flex items-center gap-1.5 text-sm ${isCompleted ? "line-through opacity-60" : ""}`}>
@@ -1157,11 +1162,7 @@ export default function GroupPage() {
       {/* リセットボタン */}
       {group.expenses.length > 0 && (
         <button
-          onClick={() => {
-            if (window.confirm("支出をすべて削除してグループをリセットしますか？\nメンバーはそのまま残ります。")) {
-              resetGroupExpenses();
-            }
-          }}
+          onClick={() => setConfirmAction({ type: "resetGroup" })}
           className="block w-full text-center py-3 border border-orange-500/30 text-orange-400 rounded-xl font-medium text-sm active:bg-orange-500/10"
         >
           精算をリセット（メンバーを残す）
@@ -1171,6 +1172,35 @@ export default function GroupPage() {
       <p className="mt-6 text-center text-xs text-zinc-600">
         支払い回数を最小化して計算しています
       </p>
+
+      {/* 確認ダイアログ */}
+      <ConfirmDialog
+        open={!!confirmAction}
+        title={
+          confirmAction?.type === "deleteMember" ? `「${confirmAction.name}」を削除しますか？` :
+          confirmAction?.type === "deleteExpense" ? `「${confirmAction.name}」を削除しますか？` :
+          "精算をリセットしますか？"
+        }
+        description={
+          confirmAction?.type === "resetGroup"
+            ? "すべての支出データが削除されます。メンバーはそのまま残ります。"
+            : "この操作は元に戻せません。"
+        }
+        confirmLabel="削除する"
+        destructive
+        onConfirm={() => {
+          if (confirmAction?.type === "deleteMember") {
+            removeMember(confirmAction.id);
+          } else if (confirmAction?.type === "deleteExpense") {
+            removeExpense(confirmAction.id);
+            cancelEditing();
+          } else if (confirmAction?.type === "resetGroup") {
+            resetGroupExpenses();
+          }
+          setConfirmAction(null);
+        }}
+        onCancel={() => setConfirmAction(null)}
+      />
     </div>
   );
 }
