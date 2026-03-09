@@ -28,6 +28,11 @@ export default function GroupPage() {
   const [copiedText, setCopiedText] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
 
+  // 明細（貸し借り / 支出）
+  const [detailOpen, setDetailOpen] = useState(false);
+  type DetailTab = "balance" | "spending";
+  const [detailTab, setDetailTab] = useState<DetailTab>("balance");
+
   // 編集モード
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDesc, setEditDesc] = useState("");
@@ -844,15 +849,112 @@ export default function GroupPage() {
             </div>
           )}
 
-          {/* 明細・共有ボタン */}
+          {/* 明細（折りたたみ）・共有ボタン */}
           {settlements.length > 0 && (
             <div className="mt-4 space-y-2">
-              <Link
-                href={`/group/${group.id}/detail`}
-                className="block w-full text-center py-2.5 border border-zinc-800 text-zinc-400 rounded-xl font-medium text-sm active:bg-zinc-800"
+              {/* 明細トグル */}
+              <button
+                onClick={() => setDetailOpen((prev) => !prev)}
+                className="w-full flex items-center justify-center gap-1.5 py-2.5 border border-zinc-800 text-zinc-400 rounded-xl font-medium text-sm active:bg-zinc-800"
               >
                 明細を見る
-              </Link>
+                <svg
+                  className={`w-4 h-4 transition-transform ${detailOpen ? "rotate-180" : ""}`}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {/* 明細コンテンツ（折りたたみ） */}
+              {detailOpen && (() => {
+                // 貸し借り計算
+                const balances = new Map<string, number>();
+                group.members.forEach((m) => balances.set(m.id, 0));
+                group.expenses.forEach((expense) => {
+                  balances.set(expense.paidBy, (balances.get(expense.paidBy) || 0) + expense.amount);
+                  const shares = calculateMemberShares(expense);
+                  shares.forEach((share, memberId) => {
+                    balances.set(memberId, (balances.get(memberId) || 0) - share);
+                  });
+                });
+                // 支出計算
+                const memberSpending = new Map<string, number>();
+                group.members.forEach((m) => memberSpending.set(m.id, 0));
+                group.expenses.forEach((expense) => {
+                  const shares = calculateMemberShares(expense);
+                  shares.forEach((share, memberId) => {
+                    memberSpending.set(memberId, (memberSpending.get(memberId) || 0) + share);
+                  });
+                });
+
+                return (
+                  <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+                    {/* タブ */}
+                    <div className="flex border-b border-zinc-800">
+                      <button
+                        onClick={() => setDetailTab("balance")}
+                        className={`flex-1 py-2.5 text-xs font-medium transition-colors ${
+                          detailTab === "balance"
+                            ? "text-blue-400 border-b-2 border-blue-400"
+                            : "text-zinc-500"
+                        }`}
+                      >
+                        貸し借り
+                      </button>
+                      <button
+                        onClick={() => setDetailTab("spending")}
+                        className={`flex-1 py-2.5 text-xs font-medium transition-colors ${
+                          detailTab === "spending"
+                            ? "text-blue-400 border-b-2 border-blue-400"
+                            : "text-zinc-500"
+                        }`}
+                      >
+                        支出
+                      </button>
+                    </div>
+
+                    <div className="px-4 py-3">
+                      {detailTab === "balance" ? (
+                        <div className="space-y-0">
+                          {group.members.map((member) => {
+                            const balance = balances.get(member.id) || 0;
+                            const isPositive = balance > 0;
+                            return (
+                              <div key={member.id} className="flex items-center justify-between py-2 border-b border-zinc-800 last:border-0">
+                                <span className="font-medium text-sm">{member.name}</span>
+                                <span className={`font-bold text-sm ${isPositive ? "text-blue-400" : balance < 0 ? "text-rose-400" : "text-zinc-400"}`}>
+                                  {isPositive ? "+" : ""}{formatCurrency(Math.round(balance))}
+                                </span>
+                              </div>
+                            );
+                          })}
+                          <p className="text-[10px] text-zinc-600 pt-2 text-center">
+                            <span className="text-blue-400">青字</span>は受取 / <span className="text-rose-400">赤字</span>は支払
+                          </p>
+                        </div>
+                      ) : (
+                        <div>
+                          {group.members.map((member) => {
+                            const spent = memberSpending.get(member.id) || 0;
+                            return (
+                              <div key={member.id} className="flex items-center justify-between py-2 border-b border-zinc-800 last:border-0">
+                                <span className="font-medium text-sm">{member.name}</span>
+                                <span className="font-bold text-sm">{formatCurrency(Math.round(spent))}</span>
+                              </div>
+                            );
+                          })}
+                          <div className="flex items-center justify-between py-2 border-t-2 border-zinc-700 mt-1">
+                            <span className="font-bold text-xs text-zinc-400">合計</span>
+                            <span className="font-bold text-sm">{formatCurrency(totalExpenses)}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="flex gap-2">
                 <button
                   onClick={handleCopySettlementUrl}
