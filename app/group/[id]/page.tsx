@@ -344,12 +344,19 @@ export default function GroupPage() {
               </button>
             </div>
           ) : (
-            <h1
-              className="text-xl font-bold truncate cursor-pointer active:text-zinc-300"
+            <button
+              className="flex items-center gap-1.5 min-w-0 group"
               onClick={() => { setGroupNameInput(group.name); setEditingGroupName(true); }}
             >
-              {group.name}
-            </h1>
+              <h1 className="text-xl font-bold truncate active:text-zinc-300">
+                {group.name}
+              </h1>
+              {settingsOpen && (
+                <svg className="w-4 h-4 flex-shrink-0 text-zinc-500 group-active:text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              )}
+            </button>
           )}
           <button
             onClick={() => setSettingsOpen((prev) => !prev)}
@@ -498,9 +505,22 @@ export default function GroupPage() {
         </Link>
       )}
 
+      {/* 上部: 立て替えを追加ボタン */}
+      {group.members.length >= 2 && (
+        <Link
+          href={`/group/${group.id}/add-expense`}
+          className="flex items-center justify-center gap-2 py-3 mb-6 border border-zinc-700 border-dashed text-zinc-400 rounded-xl font-medium text-sm active:bg-zinc-800/50 active:text-zinc-300 transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          立て替えを追加
+        </Link>
+      )}
+
       {/* 空状態ガイド */}
       {group.expenses.length === 0 && group.members.length >= 2 && (
-        <div className="text-center py-8 mb-6">
+        <div className="text-center py-4 mb-6">
           <p className="text-zinc-500 text-sm">まだ立て替えがありません</p>
         </div>
       )}
@@ -967,9 +987,14 @@ export default function GroupPage() {
 
       {/* 清算結果（同一ページ表示） */}
       {group.expenses.length > 0 && group.members.length >= 2 && (
-        <section className="mb-6">
+        <section className="mb-6 bg-gradient-to-b from-blue-500/10 to-transparent border border-blue-500/20 rounded-2xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-bold pl-3 border-l-4 border-blue-500">清算結果</h2>
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
+              </svg>
+              <h2 className="text-lg font-bold text-white">清算結果</h2>
+            </div>
             <button
               onClick={handleCopySettlementText}
               className="text-xs text-blue-400 active:text-blue-300"
@@ -998,7 +1023,7 @@ export default function GroupPage() {
                     className={`rounded-xl p-4 flex items-center gap-3 transition-colors ${
                       isCompleted
                         ? "bg-emerald-500/10 border border-emerald-500/30"
-                        : "bg-zinc-900 border border-zinc-800"
+                        : "bg-zinc-900/80 border border-zinc-700/50"
                     }`}
                   >
                     <button
@@ -1007,7 +1032,7 @@ export default function GroupPage() {
                       className={`w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
                         isCompleted
                           ? "bg-emerald-500 border-emerald-500 text-white"
-                          : "border-zinc-600 text-transparent hover:border-zinc-500"
+                          : "border-blue-500/40 text-transparent hover:border-blue-400/60"
                       }`}
                     >
                       <span className="text-sm">✓</span>
@@ -1015,14 +1040,14 @@ export default function GroupPage() {
                     <div className="flex-1 min-w-0">
                       <div className={`flex items-center gap-1.5 text-sm ${isCompleted ? "line-through opacity-60" : ""}`}>
                         <span className="font-semibold">{getMemberName(s.from)}</span>
-                        <span className="text-zinc-500">→</span>
+                        <span className="text-blue-400/60">→</span>
                         <span className="font-semibold">{getMemberName(s.to)}</span>
                       </div>
                       {receivingMethod && (
                         <span className="text-[11px] text-blue-400">{receivingMethod}で受取希望</span>
                       )}
                     </div>
-                    <span className={`font-bold text-sm ${isCompleted ? "line-through opacity-60" : ""}`}>
+                    <span className={`font-bold text-base ${isCompleted ? "line-through opacity-60" : "text-blue-400"}`}>
                       {formatCurrency(s.amount)}
                     </span>
                   </div>
