@@ -871,7 +871,8 @@ export default function GroupPage() {
                 }
 
                 const payerColor = payer ? memberColorMap.get(payer.id) : undefined;
-                const hasSplitTag = expense.splitConfig?.mode === "ratio" || expense.splitConfig?.mode === "fixed" || (expense.adjustments && expense.adjustments.length > 0);
+                const splitMode = expense.splitConfig?.mode || "equal";
+                const hasAdjustments = expense.adjustments && expense.adjustments.length > 0;
 
                 return (
                   <div
@@ -916,19 +917,20 @@ export default function GroupPage() {
                           );
                         })}
                       </div>
-                      {hasSplitTag && (
-                        <div className="flex items-center gap-1">
-                          {expense.splitConfig?.mode === "ratio" && (
-                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-400">比率</span>
-                          )}
-                          {expense.splitConfig?.mode === "fixed" && (
-                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-400">金額指定</span>
-                          )}
-                          {expense.adjustments && expense.adjustments.length > 0 && (
-                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-400">割引</span>
-                          )}
-                        </div>
-                      )}
+                      <div className="flex items-center gap-1">
+                        {splitMode === "equal" && !hasAdjustments && (
+                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-zinc-700/60 text-zinc-400">均等</span>
+                        )}
+                        {splitMode === "ratio" && (
+                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-400">比率</span>
+                        )}
+                        {splitMode === "fixed" && (
+                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-400">金額指定</span>
+                        )}
+                        {hasAdjustments && (
+                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-400">割引</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
