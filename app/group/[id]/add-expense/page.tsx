@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useGroup } from "@/lib/useGroup";
@@ -18,6 +18,22 @@ export default function AddExpensePage() {
   const [paidBy, setPaidBy] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [splitAmong, setSplitAmong] = useState<string[]>([]);
+  const initialized = useRef(false);
+
+  // グループ読み込み後に全員選択 + 前回の支払者を復元
+  useEffect(() => {
+    if (!group || initialized.current) return;
+    initialized.current = true;
+    // 全員選択デフォルト
+    setSplitAmong(group.members.map((m) => m.id));
+    // 前回の支払者を復元
+    try {
+      const savedPayer = localStorage.getItem(`waroya-last-payer-${id}`);
+      if (savedPayer && group.members.some((m) => m.id === savedPayer)) {
+        setPaidBy(savedPayer);
+      }
+    } catch { /* ignore */ }
+  }, [group, id]);
   const [expenseDate, setExpenseDate] = useState(() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -96,6 +112,8 @@ export default function AddExpensePage() {
         adjustments: splitMode === "discount" ? parseAdjustments(adjustments) : undefined,
         splitConfig,
       });
+      // 支払者を記憶
+      try { localStorage.setItem(`waroya-last-payer-${id}`, paidBy); } catch { /* ignore */ }
       router.push(`/group/${id}`);
     } catch (e) {
       console.error("Failed to add expense:", e);
