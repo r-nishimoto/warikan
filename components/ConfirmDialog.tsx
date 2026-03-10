@@ -49,19 +49,19 @@ export function ConfirmDialog({
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4">
       {/* オーバーレイ */}
       <div
-        className="absolute inset-0 bg-black/60 animate-[fadeIn_150ms_ease-out]"
+        className="absolute inset-0 bg-overlay animate-[fadeIn_150ms_ease-out]"
         onClick={onCancel}
       />
       {/* ダイアログ */}
-      <div className="relative w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-2xl p-5 animate-[slideUp_200ms_ease-out] sm:animate-[fadeIn_150ms_ease-out]">
-        <h3 className="text-base font-bold text-zinc-100">{title}</h3>
+      <div className="relative w-full max-w-sm bg-surface-secondary border border-border-default rounded-2xl p-5 animate-[slideUp_200ms_ease-out] sm:animate-[fadeIn_150ms_ease-out]">
+        <h3 className="text-base font-bold text-on-surface">{title}</h3>
         {description && (
-          <p className="mt-1.5 text-sm text-zinc-400 leading-relaxed">{description}</p>
+          <p className="mt-1.5 text-sm text-on-surface-secondary leading-relaxed">{description}</p>
         )}
         <div className="flex gap-2 mt-5">
           <button
             onClick={onCancel}
-            className="flex-1 py-2.5 border border-zinc-700 text-zinc-400 rounded-xl font-medium text-sm active:bg-zinc-800 transition-colors"
+            className="flex-1 py-2.5 border border-border-secondary text-on-surface-secondary rounded-xl font-medium text-sm active:bg-surface-tertiary transition-colors"
           >
             {cancelLabel}
           </button>

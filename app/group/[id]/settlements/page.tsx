@@ -18,7 +18,7 @@ export default function SettlementsPage() {
   if (loading) {
     return (
       <div className="p-6 text-center py-20">
-        <p className="text-zinc-500">読み込み中...</p>
+        <p className="text-on-surface-tertiary">読み込み中...</p>
       </div>
     );
   }
@@ -26,7 +26,7 @@ export default function SettlementsPage() {
   if (error || !group) {
     return (
       <div className="p-6 text-center py-20">
-        <p className="text-zinc-500 mb-4">{error || "グループが見つかりません"}</p>
+        <p className="text-on-surface-tertiary mb-4">{error || "グループが見つかりません"}</p>
         <Link href="/" className="text-blue-400">
           ホームに戻る
         </Link>
@@ -97,11 +97,11 @@ export default function SettlementsPage() {
       </div>
 
       <h1 className="text-xl font-bold mb-2">精算結果</h1>
-      <p className="text-zinc-500 text-sm mb-6">{group.name}</p>
+      <p className="text-on-surface-tertiary text-sm mb-6">{group.name}</p>
 
       {settlements.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-zinc-500">精算の必要はありません</p>
+          <p className="text-on-surface-tertiary">精算の必要はありません</p>
         </div>
       ) : (
         <>
@@ -122,7 +122,7 @@ export default function SettlementsPage() {
                   className={`rounded-2xl p-5 flex items-center gap-4 transition-colors ${
                     isCompleted
                       ? "bg-emerald-500/10 border border-emerald-500/30"
-                      : "bg-zinc-900 border border-zinc-800"
+                      : "bg-surface-secondary border border-border-default"
                   }`}
                 >
                   <button
@@ -130,7 +130,7 @@ export default function SettlementsPage() {
                     className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
                       isCompleted
                         ? "bg-emerald-500 border-emerald-500 text-white"
-                        : "border-zinc-600 text-transparent hover:border-zinc-500"
+                        : "border-border-secondary text-transparent hover:border-on-surface-tertiary"
                     }`}
                   >
                     ✓
@@ -140,7 +140,7 @@ export default function SettlementsPage() {
                       <span className="font-semibold">
                         {getMemberName(s.from)}
                       </span>
-                      <span className="text-zinc-500">→</span>
+                      <span className="text-on-surface-tertiary">→</span>
                       <span className="font-semibold">
                         {getMemberName(s.to)}
                       </span>
@@ -169,7 +169,7 @@ export default function SettlementsPage() {
               </button>
               <button
                 onClick={handleCopyUrl}
-                className="flex-1 py-3 bg-zinc-800 text-zinc-300 rounded-xl font-medium text-sm active:bg-zinc-700"
+                className="flex-1 py-3 bg-surface-tertiary text-on-surface-secondary rounded-xl font-medium text-sm active:bg-surface-tertiary"
               >
                 {copiedUrl ? "コピーしました!" : "URLをコピー"}
               </button>
@@ -189,8 +189,8 @@ export default function SettlementsPage() {
 
       {/* 端数処理の選択 */}
       <div className="mt-6">
-        <label className="block text-xs text-zinc-500 mb-2">端数処理</label>
-        <div className="flex rounded-xl overflow-hidden border border-zinc-800">
+        <label className="block text-xs text-on-surface-tertiary mb-2">端数処理</label>
+        <div className="flex rounded-xl overflow-hidden border border-border-default">
           {ROUNDING_UNITS.map((unit) => (
             <button
               key={unit.value}
@@ -198,7 +198,7 @@ export default function SettlementsPage() {
               className={`flex-1 py-2 text-sm font-medium transition-colors ${
                 roundingUnit === unit.value
                   ? "bg-blue-500 text-white"
-                  : "bg-zinc-900 text-zinc-400 active:bg-zinc-800"
+                  : "bg-surface-secondary text-on-surface-secondary active:bg-surface-tertiary"
               }`}
             >
               {unit.label}
@@ -210,19 +210,19 @@ export default function SettlementsPage() {
       <div className="space-y-3 mt-6">
         <Link
           href={`/group/${group.id}`}
-          className="block w-full text-center py-3 border border-zinc-800 text-zinc-400 rounded-xl font-medium text-sm active:bg-zinc-800"
+          className="block w-full text-center py-3 border border-border-default text-on-surface-secondary rounded-xl font-medium text-sm active:bg-surface-tertiary"
         >
           精算入力画面に戻る
         </Link>
         <Link
           href="/"
-          className="block w-full text-center py-3 border border-zinc-800 text-zinc-500 rounded-xl font-medium text-sm active:bg-zinc-800"
+          className="block w-full text-center py-3 border border-border-default text-on-surface-tertiary rounded-xl font-medium text-sm active:bg-surface-tertiary"
         >
           TOPに戻る
         </Link>
       </div>
 
-      <div className="mt-6 text-center text-xs text-zinc-600">
+      <div className="mt-6 text-center text-xs text-on-surface-faint">
         支払い回数を最小化して計算しています
       </div>
     </div>

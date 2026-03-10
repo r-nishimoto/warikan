@@ -5,6 +5,7 @@ import { useGroups } from "@/lib/useGroups";
 import { formatCurrency } from "@/lib/utils";
 import { LandingContent } from "@/components/LandingContent";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import ThemeToggle from "@/components/ThemeToggle";
 import Link from "next/link";
 
 export default function Home() {
@@ -188,15 +189,16 @@ export default function Home() {
       <div className="flex flex-col items-center py-8">
         <div className="flex items-center gap-3 mb-2">
           <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M20 4C11.163 4 4 11.163 4 20s7.163 16 16 16" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" fill="none" />
-            <path d="M20 4c8.837 0 16 7.163 16 16s-7.163 16-16 16" stroke="#a1a1aa" strokeWidth="3" strokeLinecap="round" fill="none" />
-            <line x1="20" y1="8" x2="20" y2="32" stroke="#52525b" strokeWidth="2" strokeDasharray="3 3" />
-            <text x="11" y="24" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#ffffff">¥</text>
-            <text x="29" y="24" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#a1a1aa">¥</text>
+            <path d="M20 4C11.163 4 4 11.163 4 20s7.163 16 16 16" stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none" />
+            <path d="M20 4c8.837 0 16 7.163 16 16s-7.163 16-16 16" stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.4" />
+            <line x1="20" y1="8" x2="20" y2="32" stroke="currentColor" strokeWidth="2" strokeDasharray="3 3" opacity="0.3" />
+            <text x="11" y="24" textAnchor="middle" fontSize="12" fontWeight="bold" fill="currentColor">¥</text>
+            <text x="29" y="24" textAnchor="middle" fontSize="12" fontWeight="bold" fill="currentColor" opacity="0.4">¥</text>
           </svg>
-          <h1 className="text-3xl font-bold text-white">Waroya</h1>
+          <h1 className="text-3xl font-bold text-on-surface">Waroya</h1>
+          <ThemeToggle />
         </div>
-        <p className="text-zinc-500 text-sm">みんなでサクッと割り勘</p>
+        <p className="text-on-surface-tertiary text-sm">みんなでサクッと割り勘</p>
       </div>
 
       {/* メインCTA */}
@@ -210,13 +212,13 @@ export default function Home() {
       {/* グループ一覧 */}
       {loading ? (
         <div className="space-y-2">
-          <div className="h-4 w-28 bg-zinc-800 rounded animate-pulse mb-3" />
+          <div className="h-4 w-28 bg-surface-tertiary rounded animate-pulse mb-3" />
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-zinc-900 rounded-xl border border-zinc-800 p-4">
-              <div className="h-4 w-32 bg-zinc-800 rounded animate-pulse mb-2" />
+            <div key={i} className="bg-surface-secondary rounded-xl border border-border-default p-4">
+              <div className="h-4 w-32 bg-surface-tertiary rounded animate-pulse mb-2" />
               <div className="flex gap-1">
                 {[1, 2, 3].map((j) => (
-                  <div key={j} className="w-5 h-5 rounded-full bg-zinc-800 animate-pulse" />
+                  <div key={j} className="w-5 h-5 rounded-full bg-surface-tertiary animate-pulse" />
                 ))}
               </div>
             </div>
@@ -224,7 +226,7 @@ export default function Home() {
         </div>
       ) : groups.length > 0 ? (
         <div className="mb-8">
-          <h2 className="text-sm font-medium text-zinc-400 mb-3">最近のグループ</h2>
+          <h2 className="text-sm font-medium text-on-surface-secondary mb-3">最近のグループ</h2>
           <div ref={listRef} className="flex flex-col gap-2">
             {groups.map((group, index) => {
               const isDragging = dragIndex === index;
@@ -233,12 +235,12 @@ export default function Home() {
                 <div
                   key={group.id}
                   style={getCardShiftStyle(index)}
-                  className={`bg-zinc-900 rounded-xl border p-4 select-none ${
+                  className={`bg-surface-secondary rounded-xl border p-4 select-none ${
                     isDragging
                       ? "border-blue-400 shadow-xl shadow-blue-500/25 will-change-transform"
                       : dragging
-                        ? "border-zinc-800 will-change-transform"
-                        : "border-zinc-800"
+                        ? "border-border-default will-change-transform"
+                        : "border-border-default"
                   }`}
                   onTouchStart={(e) => handleTouchStart(e, index)}
                   onTouchMove={handleTouchMove}
@@ -247,7 +249,7 @@ export default function Home() {
                 >
                   <div className="flex items-center justify-between">
                     <div
-                      className="flex items-center gap-3 text-zinc-600 cursor-grab active:cursor-grabbing pr-2 touch-none"
+                      className="flex items-center gap-3 text-on-surface-faint cursor-grab active:cursor-grabbing pr-2 touch-none"
                       onMouseDown={(e) => {
                         e.preventDefault();
                         touchStartY.current = e.clientY;
@@ -277,14 +279,14 @@ export default function Home() {
                             {group.members.slice(0, 5).map((member) => (
                               <span
                                 key={member.id}
-                                className="w-5 h-5 rounded-full bg-zinc-700 text-zinc-300 text-[10px] font-medium flex items-center justify-center"
+                                className="w-5 h-5 rounded-full bg-border-secondary text-on-surface-secondary text-[10px] font-medium flex items-center justify-center"
                                 title={member.name}
                               >
                                 {member.name.charAt(0)}
                               </span>
                             ))}
                             {group.members.length > 5 && (
-                              <span className="w-5 h-5 rounded-full bg-zinc-800 text-zinc-500 text-[9px] font-medium flex items-center justify-center">
+                              <span className="w-5 h-5 rounded-full bg-surface-tertiary text-on-surface-tertiary text-[9px] font-medium flex items-center justify-center">
                                 +{group.members.length - 5}
                               </span>
                             )}
@@ -294,7 +296,7 @@ export default function Home() {
                           <div className="text-sm font-semibold">
                             {formatCurrency(group.expenses.reduce((sum, e) => sum + e.amount, 0))}
                           </div>
-                          <div className="text-[11px] text-zinc-500">
+                          <div className="text-[11px] text-on-surface-tertiary">
                             {group.expenses.length}件
                           </div>
                         </div>
@@ -303,7 +305,7 @@ export default function Home() {
                     <button
                       onClick={() => setDeleteTarget({ id: group.id, name: group.name })}
                       aria-label={`${group.name}を削除`}
-                      className="ml-1 w-10 h-10 flex items-center justify-center text-zinc-600 hover:text-rose-400 active:text-rose-400 flex-shrink-0 rounded-lg"
+                      className="ml-1 w-10 h-10 flex items-center justify-center text-on-surface-faint hover:text-rose-400 active:text-rose-400 flex-shrink-0 rounded-lg"
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
@@ -320,10 +322,10 @@ export default function Home() {
       {/* 区切り線 */}
       <div className="relative my-10">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-zinc-800" />
+          <div className="w-full border-t border-border-default" />
         </div>
         <div className="relative flex justify-center">
-          <span className="bg-[#09090b] px-3 text-xs text-zinc-600">Waroya とは</span>
+          <span className="bg-surface px-3 text-xs text-on-surface-faint">Waroya とは</span>
         </div>
       </div>
 

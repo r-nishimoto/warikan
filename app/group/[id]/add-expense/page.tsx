@@ -126,13 +126,13 @@ export default function AddExpensePage() {
   if (loading) {
     return (
       <div className="p-6">
-        <div className="h-4 w-12 bg-zinc-800 rounded animate-pulse mb-6" />
-        <div className="h-6 w-40 bg-zinc-800 rounded animate-pulse mb-6" />
+        <div className="h-4 w-12 bg-surface-tertiary rounded animate-pulse mb-6" />
+        <div className="h-6 w-40 bg-surface-tertiary rounded animate-pulse mb-6" />
         <div className="space-y-5">
           {[1, 2, 3].map((i) => (
             <div key={i}>
-              <div className="h-3 w-20 bg-zinc-800 rounded animate-pulse mb-2" />
-              <div className="h-12 bg-zinc-800 rounded-xl animate-pulse" />
+              <div className="h-3 w-20 bg-surface-tertiary rounded animate-pulse mb-2" />
+              <div className="h-12 bg-surface-tertiary rounded-xl animate-pulse" />
             </div>
           ))}
         </div>
@@ -143,7 +143,7 @@ export default function AddExpensePage() {
   if (error || !group) {
     return (
       <div className="p-6 text-center py-20">
-        <p className="text-zinc-500 mb-4">{error || "グループが見つかりません"}</p>
+        <p className="text-on-surface-tertiary mb-4">{error || "グループが見つかりません"}</p>
         <Link href="/" className="text-blue-400">ホームに戻る</Link>
       </div>
     );
@@ -168,7 +168,7 @@ export default function AddExpensePage() {
       <div className="space-y-5">
         {/* 内容 */}
         <div>
-          <label className="block text-sm font-medium text-zinc-400 mb-1.5">内容</label>
+          <label className="block text-sm font-medium text-on-surface-secondary mb-1.5">内容</label>
           <input
             type="text"
             value={description}
@@ -176,14 +176,14 @@ export default function AddExpensePage() {
             onCompositionStart={() => setDescComposing(true)}
             onCompositionEnd={() => setDescComposing(false)}
             placeholder="例: 居酒屋での夕食"
-            className="w-full px-4 py-3 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-base placeholder:text-zinc-500"
+            className="w-full px-4 py-3 border border-border-secondary bg-surface-tertiary rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-base placeholder:text-on-surface-tertiary"
             autoFocus
           />
         </div>
 
         {/* 金額 */}
         <div>
-          <label className="block text-sm font-medium text-zinc-400 mb-1.5">金額（円）</label>
+          <label className="block text-sm font-medium text-on-surface-secondary mb-1.5">金額（円）</label>
           <input
             type="text"
             inputMode="numeric"
@@ -193,24 +193,24 @@ export default function AddExpensePage() {
               setAmount(v);
             }}
             placeholder="例: 12,000"
-            className="w-full px-4 py-3 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-base placeholder:text-zinc-500"
+            className="w-full px-4 py-3 border border-border-secondary bg-surface-tertiary rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-base placeholder:text-on-surface-tertiary"
           />
         </div>
 
         {/* 日付 */}
         <div>
-          <label className="block text-sm font-medium text-zinc-400 mb-1.5">日付（任意）</label>
+          <label className="block text-sm font-medium text-on-surface-secondary mb-1.5">日付（任意）</label>
           <input
             type="date"
             value={expenseDate}
             onChange={(e) => setExpenseDate(e.target.value)}
-            className="w-full px-4 py-3 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
+            className="w-full px-4 py-3 border border-border-secondary bg-surface-tertiary rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
           />
         </div>
 
         {/* 支払った人 */}
         <div>
-          <label className="block text-sm font-medium text-zinc-400 mb-1.5">誰が支払った？</label>
+          <label className="block text-sm font-medium text-on-surface-secondary mb-1.5">誰が支払った？</label>
           <div className="grid grid-cols-2 gap-2">
             {group.members.map((member) => (
               <button
@@ -219,7 +219,7 @@ export default function AddExpensePage() {
                 className={`px-4 py-2.5 rounded-xl text-sm font-medium border transition-colors ${
                   paidBy === member.id
                     ? "bg-blue-500 text-white border-blue-500"
-                    : "bg-zinc-800 border-zinc-700 text-zinc-300 active:bg-zinc-700"
+                    : "bg-surface-tertiary border-border-secondary text-on-surface-secondary active:bg-surface-tertiary"
                 }`}
               >
                 {member.name}
@@ -230,11 +230,11 @@ export default function AddExpensePage() {
 
         {/* 支払い方法 */}
         <div>
-          <label className="block text-sm font-medium text-zinc-400 mb-1.5">支払い方法</label>
+          <label className="block text-sm font-medium text-on-surface-secondary mb-1.5">支払い方法</label>
           <select
             value={paymentMethod}
             onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
-            className="w-full px-4 py-3 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-base bg-zinc-800 appearance-none"
+            className="w-full px-4 py-3 border border-border-secondary rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-base bg-surface-tertiary appearance-none"
           >
             {PAYMENT_METHODS.map((method) => (
               <option key={method.value} value={method.value}>{method.label}</option>
@@ -245,7 +245,7 @@ export default function AddExpensePage() {
         {/* 割り勘メンバー */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="text-sm font-medium text-zinc-400">誰で割り勘？</label>
+            <label className="text-sm font-medium text-on-surface-secondary">誰で割り勘？</label>
             <button onClick={selectAll} className="text-xs text-blue-400 active:text-blue-300">
               全員選択
             </button>
@@ -258,7 +258,7 @@ export default function AddExpensePage() {
                 className={`px-4 py-2.5 rounded-xl text-sm font-medium border transition-colors ${
                   splitAmong.includes(member.id)
                     ? "bg-emerald-500 text-white border-emerald-500"
-                    : "bg-zinc-800 border-zinc-700 text-zinc-300 active:bg-zinc-700"
+                    : "bg-surface-tertiary border-border-secondary text-on-surface-secondary active:bg-surface-tertiary"
                 }`}
               >
                 {member.name}
@@ -270,8 +270,8 @@ export default function AddExpensePage() {
         {/* 割り勘方法 */}
         {splitAmong.length > 0 && (
           <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-1.5">割り勘方法</label>
-            <div className="flex rounded-xl overflow-hidden border border-zinc-800">
+            <label className="block text-sm font-medium text-on-surface-secondary mb-1.5">割り勘方法</label>
+            <div className="flex rounded-xl overflow-hidden border border-border-default">
               {([
                 { value: "equal" as UISplitMode, label: "均等" },
                 { value: "ratio" as UISplitMode, label: "比率" },
@@ -289,7 +289,7 @@ export default function AddExpensePage() {
                   className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
                     splitMode === mode.value
                       ? "bg-blue-500 text-white"
-                      : "bg-zinc-900 text-zinc-400 active:bg-zinc-800"
+                      : "bg-surface-secondary text-on-surface-secondary active:bg-surface-tertiary"
                   }`}
                 >
                   {mode.label}
@@ -300,12 +300,12 @@ export default function AddExpensePage() {
             {/* 比率入力 */}
             {splitMode === "ratio" && (
               <div className="mt-3 space-y-2">
-                <p className="text-xs text-zinc-500">各メンバーの比率を入力</p>
+                <p className="text-xs text-on-surface-tertiary">各メンバーの比率を入力</p>
                 {splitAmong.map((memberId) => {
                   const member = group.members.find((m) => m.id === memberId);
                   return (
                     <div key={memberId} className="flex items-center gap-3">
-                      <span className="text-sm text-zinc-300 w-20 truncate">{member?.name}</span>
+                      <span className="text-sm text-on-surface-secondary w-20 truncate">{member?.name}</span>
                       <input
                         type="text"
                         inputMode="numeric"
@@ -314,14 +314,14 @@ export default function AddExpensePage() {
                           const v = e.target.value.replace(/[^0-9]/g, "");
                           setRatios((prev) => ({ ...prev, [memberId]: v }));
                         }}
-                        className="flex-1 px-3 py-2 border border-zinc-700 bg-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-center"
+                        className="flex-1 px-3 py-2 border border-border-secondary bg-surface-tertiary rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-center"
                       />
                     </div>
                   );
                 })}
                 {parseInt(amount, 10) > 0 && (
-                  <div className="bg-zinc-800/30 rounded-xl p-3 mt-2">
-                    <p className="text-xs text-zinc-500 mb-2">1人あたり金額（目安）</p>
+                  <div className="bg-surface-tertiary/30 rounded-xl p-3 mt-2">
+                    <p className="text-xs text-on-surface-tertiary mb-2">1人あたり金額（目安）</p>
                     <div className="space-y-1">
                       {(() => {
                         const numAmount = parseInt(amount, 10);
@@ -332,8 +332,8 @@ export default function AddExpensePage() {
                           const memberShare = Math.round(numAmount * ratio / totalRatio);
                           return (
                             <div key={memberId} className="flex justify-between text-xs">
-                              <span className="text-zinc-400">{member?.name} ({ratio})</span>
-                              <span className="text-zinc-300">{formatCurrency(memberShare)}</span>
+                              <span className="text-on-surface-secondary">{member?.name} ({ratio})</span>
+                              <span className="text-on-surface-secondary">{formatCurrency(memberShare)}</span>
                             </div>
                           );
                         });
@@ -347,12 +347,12 @@ export default function AddExpensePage() {
             {/* 金額指定入力 */}
             {splitMode === "fixed" && (
               <div className="mt-3 space-y-2">
-                <p className="text-xs text-zinc-500">各メンバーの負担額を入力</p>
+                <p className="text-xs text-on-surface-tertiary">各メンバーの負担額を入力</p>
                 {splitAmong.map((memberId) => {
                   const member = group.members.find((m) => m.id === memberId);
                   return (
                     <div key={memberId} className="flex items-center gap-3">
-                      <span className="text-sm text-zinc-300 w-20 truncate">{member?.name}</span>
+                      <span className="text-sm text-on-surface-secondary w-20 truncate">{member?.name}</span>
                       <input
                         type="text"
                         inputMode="numeric"
@@ -362,9 +362,9 @@ export default function AddExpensePage() {
                           setFixedAmounts((prev) => ({ ...prev, [memberId]: v }));
                         }}
                         placeholder="0"
-                        className="flex-1 px-3 py-2 border border-zinc-700 bg-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-right"
+                        className="flex-1 px-3 py-2 border border-border-secondary bg-surface-tertiary rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-right"
                       />
-                      <span className="text-zinc-500 text-xs">円</span>
+                      <span className="text-on-surface-tertiary text-xs">円</span>
                     </div>
                   );
                 })}
@@ -373,7 +373,7 @@ export default function AddExpensePage() {
                     (() => {
                       const total = splitAmong.reduce((sum, mid) => sum + (parseInt(fixedAmounts[mid] || "0", 10) || 0), 0);
                       const numAmount = parseInt(amount, 10);
-                      return total === numAmount ? "text-emerald-400" : total > numAmount ? "text-rose-400" : "text-zinc-500";
+                      return total === numAmount ? "text-emerald-400" : total > numAmount ? "text-rose-400" : "text-on-surface-tertiary";
                     })()
                   }`}>
                     {(() => {
@@ -393,9 +393,9 @@ export default function AddExpensePage() {
             {splitMode === "discount" && (
               <div className="mt-3 space-y-3">
                 {adjustments.map((adj, index) => (
-                  <div key={index} className="bg-zinc-800/50 rounded-xl p-3 space-y-2">
+                  <div key={index} className="bg-surface-tertiary/50 rounded-xl p-3 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-zinc-500">割引 {index + 1}</span>
+                      <span className="text-xs text-on-surface-tertiary">割引 {index + 1}</span>
                       <button
                         onClick={() => setAdjustments((prev) => prev.filter((_, i) => i !== index))}
                         className="text-xs text-rose-400 active:text-rose-300"
@@ -404,7 +404,7 @@ export default function AddExpensePage() {
                       </button>
                     </div>
                     <div>
-                      <label className="block text-xs text-zinc-500 mb-1">対象メンバー</label>
+                      <label className="block text-xs text-on-surface-tertiary mb-1">対象メンバー</label>
                       <div className="flex flex-wrap gap-1.5">
                         {group.members
                           .filter((m) => splitAmong.includes(m.id))
@@ -423,7 +423,7 @@ export default function AddExpensePage() {
                               className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
                                 adj.memberIds.includes(member.id)
                                   ? "bg-orange-500 text-white border-orange-500"
-                                  : "bg-zinc-800 border-zinc-700 text-zinc-400 active:bg-zinc-700"
+                                  : "bg-surface-tertiary border-border-secondary text-on-surface-secondary active:bg-surface-tertiary"
                               }`}
                             >
                               {member.name}
@@ -432,9 +432,9 @@ export default function AddExpensePage() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs text-zinc-500 mb-1">割引額（1人あたり）</label>
+                      <label className="block text-xs text-on-surface-tertiary mb-1">割引額（1人あたり）</label>
                       <div className="flex items-center gap-2">
-                        <span className="text-zinc-500 text-sm">-</span>
+                        <span className="text-on-surface-tertiary text-sm">-</span>
                         <input
                           type="text"
                           inputMode="numeric"
@@ -444,19 +444,19 @@ export default function AddExpensePage() {
                             setAdjustments((prev) => prev.map((a, i) => (i === index ? { ...a, amount: v } : a)));
                           }}
                           placeholder="1000"
-                          className="flex-1 px-3 py-2 border border-zinc-700 bg-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-zinc-600"
+                          className="flex-1 px-3 py-2 border border-border-secondary bg-surface-tertiary rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-on-surface-faint"
                         />
-                        <span className="text-zinc-500 text-sm">円</span>
+                        <span className="text-on-surface-tertiary text-sm">円</span>
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs text-zinc-500 mb-1">メモ（任意）</label>
+                      <label className="block text-xs text-on-surface-tertiary mb-1">メモ（任意）</label>
                       <input
                         type="text"
                         value={adj.memo}
                         onChange={(e) => setAdjustments((prev) => prev.map((a, i) => (i === index ? { ...a, memo: e.target.value } : a)))}
                         placeholder="例: ノンアル"
-                        className="w-full px-3 py-2 border border-zinc-700 bg-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-zinc-600"
+                        className="w-full px-3 py-2 border border-border-secondary bg-surface-tertiary rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-on-surface-faint"
                       />
                     </div>
                   </div>
@@ -464,7 +464,7 @@ export default function AddExpensePage() {
 
                 <button
                   onClick={() => setAdjustments((prev) => [...prev, { memberIds: [], amount: "", memo: "" }])}
-                  className="w-full py-2 border border-dashed border-zinc-700 text-zinc-500 rounded-xl text-sm active:bg-zinc-800"
+                  className="w-full py-2 border border-dashed border-border-secondary text-on-surface-tertiary rounded-xl text-sm active:bg-surface-tertiary"
                 >
                   + 割引を追加
                 </button>
@@ -473,8 +473,8 @@ export default function AddExpensePage() {
                 {adjustments.some((a) => a.memberIds.length > 0 && parseInt(a.amount, 10) > 0) &&
                   parseInt(amount, 10) > 0 &&
                   splitAmong.length > 0 && (
-                    <div className="bg-zinc-800/30 rounded-xl p-3">
-                      <p className="text-xs text-zinc-500 mb-2">割引後の1人あたり金額（目安）</p>
+                    <div className="bg-surface-tertiary/30 rounded-xl p-3">
+                      <p className="text-xs text-on-surface-tertiary mb-2">割引後の1人あたり金額（目安）</p>
                       <div className="space-y-1">
                         {(() => {
                           const tempExpense: Expense = {
@@ -495,8 +495,8 @@ export default function AddExpensePage() {
                             const diff = share - baseShare;
                             return (
                               <div key={memberId} className="flex justify-between text-xs">
-                                <span className="text-zinc-400">{member?.name}</span>
-                                <span className={diff !== 0 ? "text-orange-400" : "text-zinc-300"}>
+                                <span className="text-on-surface-secondary">{member?.name}</span>
+                                <span className={diff !== 0 ? "text-orange-400" : "text-on-surface-secondary"}>
                                   {formatCurrency(share)}
                                   {diff !== 0 && ` (${diff > 0 ? "+" : ""}${formatCurrency(diff)})`}
                                 </span>

@@ -16,10 +16,10 @@ function IllustAdjust() {
       <path d="M174 25 L174 18" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" />
       <path d="M169 22 L174 16 L179 22" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       {/* ラベル */}
-      <text x="54" y="152" textAnchor="middle" fontSize="9" fill="#71717a">A</text>
-      <text x="94" y="152" textAnchor="middle" fontSize="9" fill="#71717a">B</text>
-      <text x="134" y="152" textAnchor="middle" fontSize="9" fill="#71717a">C</text>
-      <text x="174" y="152" textAnchor="middle" fontSize="9" fill="#71717a">D</text>
+      <text x="54" y="152" textAnchor="middle" fontSize="9" fill="currentColor" className="text-on-surface-tertiary">A</text>
+      <text x="94" y="152" textAnchor="middle" fontSize="9" fill="currentColor" className="text-on-surface-tertiary">B</text>
+      <text x="134" y="152" textAnchor="middle" fontSize="9" fill="currentColor" className="text-on-surface-tertiary">C</text>
+      <text x="174" y="152" textAnchor="middle" fontSize="9" fill="currentColor" className="text-on-surface-tertiary">D</text>
     </svg>
   );
 }
@@ -52,8 +52,8 @@ function IllustShare() {
   return (
     <svg viewBox="0 0 240 160" fill="none" className="w-full max-w-[240px] mx-auto">
       {/* スマホフレーム */}
-      <rect x="80" y="15" width="80" height="130" rx="12" fill="#18181b" stroke="#3f3f46" strokeWidth="2" />
-      <rect x="86" y="25" width="68" height="110" rx="4" fill="#27272a" />
+      <rect x="80" y="15" width="80" height="130" rx="12" className="fill-surface-secondary stroke-border-secondary" strokeWidth="2" />
+      <rect x="86" y="25" width="68" height="110" rx="4" className="fill-surface-tertiary" />
       {/* 画面内のURL風ライン */}
       <rect x="94" y="35" width="52" height="8" rx="4" fill="#3b82f6" opacity="0.3" />
       {/* シェアアイコン */}
@@ -82,10 +82,10 @@ function PhoneMockup({ children }: { children: React.ReactNode }) {
       {/* 背景カラーフレーム */}
       <div className="absolute inset-0 bg-blue-500/20 rounded-[28px] -m-2" />
       {/* スマホ外枠 */}
-      <div className="relative bg-zinc-900 rounded-[24px] border-2 border-zinc-700 overflow-hidden shadow-lg shadow-blue-500/10">
+      <div className="relative bg-surface-secondary rounded-[24px] border-2 border-border-secondary overflow-hidden shadow-lg shadow-blue-500/10">
         {/* ノッチ */}
         <div className="flex justify-center pt-2 pb-1">
-          <div className="w-16 h-1 rounded-full bg-zinc-700" />
+          <div className="w-16 h-1 rounded-full bg-border-secondary" />
         </div>
         {/* 画面コンテンツ */}
         <div className="px-3 pb-4 space-y-2">
@@ -105,12 +105,12 @@ export function LandingContent() {
     <div className="space-y-16">
 
       {/* ── 特長その1 ── */}
-      <section className="bg-zinc-900/60 rounded-2xl p-6 text-center">
+      <section className="bg-surface-secondary/60 rounded-2xl p-6 text-center">
         <span className="text-blue-400 text-xs font-bold tracking-wider">特長 01</span>
         <h3 className="text-xl font-bold mt-2 leading-snug">
           ノンアル・途中参加も<br />1人ずつ柔軟に調整
         </h3>
-        <p className="text-zinc-500 text-sm mt-3 leading-relaxed">
+        <p className="text-on-surface-tertiary text-sm mt-3 leading-relaxed">
           均等割りだけじゃない。<br />
           メンバーごとの割引・追加を自由に設定できます。
         </p>
@@ -120,12 +120,12 @@ export function LandingContent() {
       </section>
 
       {/* ── 特長その2 ── */}
-      <section className="bg-zinc-900/60 rounded-2xl p-6 text-center">
+      <section className="bg-surface-secondary/60 rounded-2xl p-6 text-center">
         <span className="text-blue-400 text-xs font-bold tracking-wider">特長 02</span>
         <h3 className="text-xl font-bold mt-2 leading-snug">
           最小回数で精算を<br />自動計算
         </h3>
-        <p className="text-zinc-500 text-sm mt-3 leading-relaxed">
+        <p className="text-on-surface-tertiary text-sm mt-3 leading-relaxed">
           誰が誰にいくら渡せばいいか、<br />
           最適な組み合わせをリアルタイムで算出。
         </p>
@@ -135,12 +135,12 @@ export function LandingContent() {
       </section>
 
       {/* ── 特長その3 ── */}
-      <section className="bg-zinc-900/60 rounded-2xl p-6 text-center">
+      <section className="bg-surface-secondary/60 rounded-2xl p-6 text-center">
         <span className="text-blue-400 text-xs font-bold tracking-wider">特長 03</span>
         <h3 className="text-xl font-bold mt-2 leading-snug">
           URLひとつで<br />メンバーに共有
         </h3>
-        <p className="text-zinc-500 text-sm mt-3 leading-relaxed">
+        <p className="text-on-surface-tertiary text-sm mt-3 leading-relaxed">
           アプリ不要、登録不要。<br />
           LINEやSNSでリンクを送るだけ。
         </p>
@@ -158,7 +158,7 @@ export function LandingContent() {
           {useCases.map((tag) => (
             <span
               key={tag}
-              className="border border-zinc-700 text-zinc-400 rounded-full px-4 py-1.5 text-sm"
+              className="border border-border-secondary text-on-surface-secondary rounded-full px-4 py-1.5 text-sm"
             >
               # {tag}
             </span>
@@ -176,17 +176,17 @@ export function LandingContent() {
         <div className="mb-10">
           <p className="text-base font-bold mb-4">1. グループを作成する</p>
           <PhoneMockup>
-            <div className="text-[10px] text-zinc-500">グループ名</div>
-            <div className="bg-zinc-800 rounded-lg px-2 py-1.5 text-xs font-bold">夏キャンプ 2026</div>
-            <div className="text-[10px] text-zinc-500 mt-1">メンバー</div>
+            <div className="text-[10px] text-on-surface-tertiary">グループ名</div>
+            <div className="bg-surface-tertiary rounded-lg px-2 py-1.5 text-xs font-bold">夏キャンプ 2026</div>
+            <div className="text-[10px] text-on-surface-tertiary mt-1">メンバー</div>
             <div className="flex flex-wrap gap-1">
               {["たくみ", "さき", "ゆうた", "みお"].map((n) => (
-                <span key={n} className="bg-zinc-800 rounded-full px-2 py-0.5 text-[10px] text-zinc-300">{n} ×</span>
+                <span key={n} className="bg-surface-tertiary rounded-full px-2 py-0.5 text-[10px] text-on-surface-secondary">{n} ×</span>
               ))}
             </div>
             <div className="bg-blue-500 rounded-lg py-1.5 text-xs text-white text-center font-medium mt-2">グループを作成</div>
           </PhoneMockup>
-          <p className="text-zinc-500 text-sm mt-4 leading-relaxed">
+          <p className="text-on-surface-tertiary text-sm mt-4 leading-relaxed">
             イベント名とメンバーを入力するだけ。<br />
             会員登録は不要です。
           </p>
@@ -198,18 +198,18 @@ export function LandingContent() {
           <PhoneMockup>
             <div className="flex items-center gap-1">
               <span className="bg-blue-500/20 text-blue-400 rounded-full px-2 py-0.5 text-[10px]">たくみ</span>
-              <span className="text-[10px] text-zinc-500">が</span>
+              <span className="text-[10px] text-on-surface-tertiary">が</span>
             </div>
             <div className="flex flex-wrap gap-1 mt-1">
               {["たくみ", "さき", "ゆうた", "みお"].map((n) => (
                 <span key={n} className="bg-blue-500/20 border border-blue-500/40 rounded px-1.5 py-0.5 text-[9px] text-blue-300">{n}</span>
               ))}
             </div>
-            <div className="bg-zinc-800 rounded-lg px-2 py-1.5 text-xs mt-1">BBQ食材</div>
-            <div className="bg-zinc-800 rounded-lg px-2 py-1.5 text-xs font-bold mt-1">¥7,600</div>
+            <div className="bg-surface-tertiary rounded-lg px-2 py-1.5 text-xs mt-1">BBQ食材</div>
+            <div className="bg-surface-tertiary rounded-lg px-2 py-1.5 text-xs font-bold mt-1">¥7,600</div>
             <div className="bg-blue-500 rounded-lg py-1.5 text-xs text-white text-center font-medium mt-2">登録</div>
           </PhoneMockup>
-          <p className="text-zinc-500 text-sm mt-4 leading-relaxed">
+          <p className="text-on-surface-tertiary text-sm mt-4 leading-relaxed">
             誰が何に何円払ったかを記録。<br />
             メンバー全員が登録できるので幹事の負担を軽減。
           </p>
@@ -219,27 +219,27 @@ export function LandingContent() {
         <div className="mb-10">
           <p className="text-base font-bold mb-4">3. 調整して精算する</p>
           <PhoneMockup>
-            <div className="text-[10px] text-zinc-500 font-bold">精算方法</div>
+            <div className="text-[10px] text-on-surface-tertiary font-bold">精算方法</div>
             <div className="space-y-1.5 mt-1">
-              <div className="bg-zinc-800 rounded-lg px-2 py-2 flex items-center justify-between">
+              <div className="bg-surface-tertiary rounded-lg px-2 py-2 flex items-center justify-between">
                 <span className="text-[10px]"><span className="text-blue-400">さき</span> → <span className="text-emerald-400">たくみ</span></span>
                 <span className="text-[11px] font-bold">¥2,400</span>
               </div>
-              <div className="bg-zinc-800 rounded-lg px-2 py-2 flex items-center justify-between">
+              <div className="bg-surface-tertiary rounded-lg px-2 py-2 flex items-center justify-between">
                 <span className="text-[10px]"><span className="text-blue-400">みお</span> → <span className="text-emerald-400">たくみ</span></span>
                 <span className="text-[11px] font-bold">¥1,500</span>
               </div>
-              <div className="bg-zinc-800 rounded-lg px-2 py-2 flex items-center justify-between">
+              <div className="bg-surface-tertiary rounded-lg px-2 py-2 flex items-center justify-between">
                 <span className="text-[10px]"><span className="text-blue-400">ゆうた</span> → <span className="text-emerald-400">さき</span></span>
                 <span className="text-[11px] font-bold">¥700</span>
               </div>
             </div>
             <div className="flex gap-1 mt-2">
-              <div className="flex-1 bg-zinc-800 rounded-lg py-1.5 text-[10px] text-center text-zinc-400">コピー</div>
+              <div className="flex-1 bg-surface-tertiary rounded-lg py-1.5 text-[10px] text-center text-on-surface-secondary">コピー</div>
               <div className="flex-1 bg-emerald-600 rounded-lg py-1.5 text-[10px] text-center text-white">LINE共有</div>
             </div>
           </PhoneMockup>
-          <p className="text-zinc-500 text-sm mt-4 leading-relaxed">
+          <p className="text-on-surface-tertiary text-sm mt-4 leading-relaxed">
             最適な精算方法を自動で計算。<br />
             結果はLINEやURLでかんたんに共有できます。
           </p>
@@ -249,7 +249,7 @@ export function LandingContent() {
       {/* ── ボトムCTA ── */}
       <section className="text-center pb-4">
         <h3 className="text-xl font-bold mb-2">さっそく始めてみよう</h3>
-        <p className="text-zinc-500 text-sm mb-6">登録不要・完全無料</p>
+        <p className="text-on-surface-tertiary text-sm mb-6">登録不要・完全無料</p>
         <Link
           href="/new"
           className="block w-full text-center py-4 bg-blue-500 text-white rounded-xl font-medium text-base active:bg-blue-600"

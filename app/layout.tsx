@@ -31,7 +31,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja">
+    <html lang="ja" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("theme");if(t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme:dark)").matches)){document.documentElement.classList.add("dark");document.querySelector('meta[name="theme-color"]')?.setAttribute("content","#09090b")}else{document.querySelector('meta[name="theme-color"]')?.setAttribute("content","#ffffff")}}catch(e){}})()`,
+          }}
+        />
+      </head>
       <body className={`${geistSans.variable} antialiased`}>
         <div className="min-h-screen max-w-lg mx-auto">{children}</div>
       </body>

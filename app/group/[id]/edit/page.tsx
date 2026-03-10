@@ -42,7 +42,7 @@ export default function EditGroupPage() {
   if (loading) {
     return (
       <div className="p-6 text-center py-20">
-        <p className="text-zinc-500">読み込み中...</p>
+        <p className="text-on-surface-tertiary">読み込み中...</p>
       </div>
     );
   }
@@ -50,7 +50,7 @@ export default function EditGroupPage() {
   if (error || !group) {
     return (
       <div className="p-6 text-center py-20">
-        <p className="text-zinc-500 mb-4">{error || "グループが見つかりません"}</p>
+        <p className="text-on-surface-tertiary mb-4">{error || "グループが見つかりません"}</p>
         <Link href="/" className="text-blue-400">ホームに戻る</Link>
       </div>
     );
@@ -69,7 +69,7 @@ export default function EditGroupPage() {
       <div className="space-y-8">
         {/* グループ名 */}
         <div>
-          <label className="block text-sm font-medium text-zinc-400 mb-2">グループ名</label>
+          <label className="block text-sm font-medium text-on-surface-secondary mb-2">グループ名</label>
           {editingGroupName ? (
             <div className="flex gap-2">
               <input
@@ -85,12 +85,12 @@ export default function EditGroupPage() {
                     setEditingGroupName(false);
                   }
                 }}
-                className="flex-1 px-4 py-3 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
+                className="flex-1 px-4 py-3 border border-border-secondary bg-surface-tertiary rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
                 autoFocus
               />
               <button
                 onClick={() => setEditingGroupName(false)}
-                className="px-4 py-3 text-sm text-zinc-400 border border-zinc-700 rounded-xl"
+                className="px-4 py-3 text-sm text-on-surface-secondary border border-border-secondary rounded-xl"
               >
                 取消
               </button>
@@ -112,10 +112,10 @@ export default function EditGroupPage() {
                 setGroupNameInput(group.name);
                 setEditingGroupName(true);
               }}
-              className="flex items-center gap-2 text-lg font-bold active:text-zinc-300"
+              className="flex items-center gap-2 text-lg font-bold active:text-on-surface-secondary"
             >
               {group.name}
-              <svg className="w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-4 h-4 text-on-surface-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
               </svg>
             </button>
@@ -124,7 +124,7 @@ export default function EditGroupPage() {
 
         {/* メンバー管理 */}
         <div>
-          <label className="block text-sm font-medium text-zinc-400 mb-2">メンバー</label>
+          <label className="block text-sm font-medium text-on-surface-secondary mb-2">メンバー</label>
 
           <div className="flex gap-2 mb-3">
             <input
@@ -137,7 +137,7 @@ export default function EditGroupPage() {
                 if (e.key === "Enter" && !memberComposing) handleAddMember();
               }}
               placeholder="メンバー名を入力"
-              className="flex-1 px-4 py-3 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-base placeholder:text-zinc-500"
+              className="flex-1 px-4 py-3 border border-border-secondary bg-surface-tertiary rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-base placeholder:text-on-surface-tertiary"
             />
             <button
               onClick={handleAddMember}
@@ -151,7 +151,7 @@ export default function EditGroupPage() {
           {memberError && <p className="text-rose-400 text-sm mb-2">{memberError}</p>}
 
           {group.members.length === 0 ? (
-            <p className="text-zinc-600 text-sm py-4 text-center">メンバーを追加してください</p>
+            <p className="text-on-surface-faint text-sm py-4 text-center">メンバーを追加してください</p>
           ) : (
             <div className="space-y-2">
               {group.members.map((member) => {
@@ -159,10 +159,10 @@ export default function EditGroupPage() {
                 return (
                   <div
                     key={member.id}
-                    className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3"
+                    className="bg-surface-secondary border border-border-default rounded-xl px-4 py-3"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="w-7 h-7 rounded-full bg-zinc-700 text-zinc-300 text-xs font-medium flex items-center justify-center flex-shrink-0">
+                      <span className="w-7 h-7 rounded-full bg-border-secondary text-on-surface-secondary text-xs font-medium flex items-center justify-center flex-shrink-0">
                         {member.name.charAt(0)}
                       </span>
                       <span className="flex-1 font-medium text-sm">{member.name}</span>
@@ -176,7 +176,7 @@ export default function EditGroupPage() {
                             updateMemberPreference(member.id, val);
                           }
                         }}
-                        className="text-xs bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-zinc-400"
+                        className="text-xs bg-surface-tertiary border border-border-secondary rounded-lg px-2 py-1.5 text-on-surface-secondary"
                       >
                         {RECEIVING_METHODS.map((rm) => (
                           <option key={rm.value} value={rm.value}>{rm.label}</option>
@@ -188,7 +188,7 @@ export default function EditGroupPage() {
                             removeMember(member.id);
                           }
                         }}
-                        className="text-zinc-600 hover:text-rose-400 text-lg"
+                        className="text-on-surface-faint hover:text-rose-400 text-lg"
                       >
                         ×
                       </button>
@@ -207,7 +207,7 @@ export default function EditGroupPage() {
                               (e.target as HTMLInputElement).blur();
                             }
                           }}
-                          className="w-full px-3 py-2 text-xs bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-zinc-600"
+                          className="w-full px-3 py-2 text-xs bg-surface-tertiary border border-border-secondary rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-on-surface-faint"
                         />
                       </div>
                     )}

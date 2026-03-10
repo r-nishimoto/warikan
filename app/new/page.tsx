@@ -66,7 +66,7 @@ export default function NewGroupPage() {
       <div className="space-y-6">
         {/* グループ名 */}
         <div>
-          <label className="block text-sm font-medium text-zinc-400 mb-1.5">
+          <label className="block text-sm font-medium text-on-surface-secondary mb-1.5">
             グループ名
           </label>
           <input
@@ -76,14 +76,14 @@ export default function NewGroupPage() {
             onCompositionStart={() => setNameComposing(true)}
             onCompositionEnd={() => setNameComposing(false)}
             placeholder="例: 箱根旅行"
-            className="w-full px-4 py-3 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-base placeholder:text-zinc-500"
+            className="w-full px-4 py-3 border border-border-secondary bg-surface-tertiary rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-base placeholder:text-on-surface-tertiary"
             autoFocus
           />
         </div>
 
         {/* メンバー追加 */}
         <div>
-          <label className="block text-sm font-medium text-zinc-400 mb-1.5">
+          <label className="block text-sm font-medium text-on-surface-secondary mb-1.5">
             メンバー名
           </label>
           <div className="flex gap-2">
@@ -98,7 +98,7 @@ export default function NewGroupPage() {
                 if (e.key === "Enter" && !memberComposing) handleAddMember();
               }}
               placeholder="例: たろう"
-              className="flex-1 px-4 py-3 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-base placeholder:text-zinc-500"
+              className="flex-1 px-4 py-3 border border-border-secondary bg-surface-tertiary rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-base placeholder:text-on-surface-tertiary"
             />
             <button
               onClick={handleAddMember}
@@ -115,12 +115,12 @@ export default function NewGroupPage() {
               {members.map((m) => (
                 <span
                   key={m}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 border border-zinc-700 rounded-full text-sm"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-tertiary border border-border-secondary rounded-full text-sm"
                 >
                   {m}
                   <button
                     onClick={() => handleRemoveMember(m)}
-                    className="text-zinc-500 hover:text-zinc-300 text-xs"
+                    className="text-on-surface-tertiary hover:text-on-surface-secondary text-xs"
                   >
                     ×
                   </button>
@@ -143,7 +143,7 @@ export default function NewGroupPage() {
           {submitting ? "作成中..." : "グループを作成"}
         </button>
 
-        <p className="text-xs text-zinc-600 text-center">
+        <p className="text-xs text-on-surface-faint text-center">
           メンバーはあとから追加・編集できます
         </p>
       </div>

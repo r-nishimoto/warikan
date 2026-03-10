@@ -217,20 +217,20 @@ export default function GroupPage() {
   if (loading) {
     return (
       <div className="p-6 pb-8">
-        <div className="h-4 w-16 bg-zinc-800 rounded animate-pulse mb-6" />
-        <div className="h-7 w-48 bg-zinc-800 rounded animate-pulse mb-2" />
+        <div className="h-4 w-16 bg-surface-tertiary rounded animate-pulse mb-6" />
+        <div className="h-7 w-48 bg-surface-tertiary rounded animate-pulse mb-2" />
         <div className="flex flex-wrap gap-1.5 mb-6">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-5 w-12 bg-zinc-800 rounded-md animate-pulse" />
+            <div key={i} className="h-5 w-12 bg-surface-tertiary rounded-md animate-pulse" />
           ))}
         </div>
-        <div className="h-10 bg-zinc-800 rounded-lg animate-pulse mb-6" />
-        <div className="h-12 bg-zinc-800 rounded-xl animate-pulse mb-6" />
+        <div className="h-10 bg-surface-tertiary rounded-lg animate-pulse mb-6" />
+        <div className="h-12 bg-surface-tertiary rounded-xl animate-pulse mb-6" />
         <div className="space-y-2">
           {[1, 2].map((i) => (
-            <div key={i} className="bg-zinc-900 rounded-xl border border-zinc-800 p-4">
-              <div className="h-4 w-40 bg-zinc-800 rounded animate-pulse mb-2" />
-              <div className="h-3 w-56 bg-zinc-800/60 rounded animate-pulse" />
+            <div key={i} className="bg-surface-secondary rounded-xl border border-border-default p-4">
+              <div className="h-4 w-40 bg-surface-tertiary rounded animate-pulse mb-2" />
+              <div className="h-3 w-56 bg-surface-tertiary/60 rounded animate-pulse" />
             </div>
           ))}
         </div>
@@ -241,7 +241,7 @@ export default function GroupPage() {
   if (error || !group) {
     return (
       <div className="p-6 text-center py-20">
-        <p className="text-zinc-500 mb-4">{error || "グループが見つかりません"}</p>
+        <p className="text-on-surface-tertiary mb-4">{error || "グループが見つかりません"}</p>
         <Link href="/" className="text-blue-400">ホームに戻る</Link>
       </div>
     );
@@ -320,7 +320,7 @@ export default function GroupPage() {
       </div>
 
       {/* ヘッダーカード */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 mb-6">
+      <div className="bg-surface-secondary border border-border-default rounded-2xl p-4 mb-6">
         <div className="flex items-center justify-between">
           {editingGroupName ? (
             <div className="flex gap-2 flex-1 mr-2">
@@ -337,7 +337,7 @@ export default function GroupPage() {
                     setEditingGroupName(false);
                   }
                 }}
-                className="flex-1 px-3 py-1.5 border border-zinc-700 bg-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
+                className="flex-1 px-3 py-1.5 border border-border-secondary bg-surface-tertiary rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
                 autoFocus
               />
               <button
@@ -357,11 +357,11 @@ export default function GroupPage() {
               className="flex items-center gap-1.5 min-w-0 group"
               onClick={() => { setGroupNameInput(group.name); setEditingGroupName(true); }}
             >
-              <h1 className="text-xl font-bold truncate active:text-zinc-300">
+              <h1 className="text-xl font-bold truncate active:text-on-surface-secondary">
                 {group.name}
               </h1>
               {settingsOpen && (
-                <svg className="w-4 h-4 flex-shrink-0 text-zinc-500 group-active:text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="w-4 h-4 flex-shrink-0 text-on-surface-tertiary group-active:text-on-surface-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                 </svg>
               )}
@@ -370,7 +370,7 @@ export default function GroupPage() {
           <button
             onClick={() => setSettingsOpen((prev) => !prev)}
             aria-label={settingsOpen ? "設定を閉じる" : "グループ設定"}
-            className={`p-2.5 -mr-1 flex-shrink-0 transition-colors ${settingsOpen ? "text-blue-400" : "text-zinc-500 active:text-zinc-300"}`}
+            className={`p-2.5 -mr-1 flex-shrink-0 transition-colors ${settingsOpen ? "text-blue-400" : "text-on-surface-tertiary active:text-on-surface-secondary"}`}
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               {settingsOpen ? (
@@ -388,7 +388,7 @@ export default function GroupPage() {
             return (
               <span
                 key={member.id}
-                className={`text-xs rounded-md px-2 py-0.5 ${color?.bg || "bg-zinc-800"} ${color?.text || "text-zinc-400"}`}
+                className={`text-xs rounded-md px-2 py-0.5 ${color?.bg || "bg-surface-tertiary"} ${color?.text || "text-on-surface-secondary"}`}
               >
                 {member.name}
               </span>
@@ -403,7 +403,7 @@ export default function GroupPage() {
 
         {/* インライン設定パネル */}
         {settingsOpen && (
-          <div className="mt-3 pt-3 border-t border-zinc-800 space-y-3">
+          <div className="mt-3 pt-3 border-t border-border-default space-y-3">
             {/* メンバー追加 */}
             <div className="flex gap-2">
               <input
@@ -416,7 +416,7 @@ export default function GroupPage() {
                   if (e.key === "Enter" && !newMemberComposing) handleAddMember();
                 }}
                 placeholder="メンバー名を入力"
-                className="flex-1 px-3 py-2 border border-zinc-700 bg-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-zinc-500"
+                className="flex-1 px-3 py-2 border border-border-secondary bg-surface-tertiary rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-on-surface-tertiary"
               />
               <button
                 onClick={handleAddMember}
@@ -435,9 +435,9 @@ export default function GroupPage() {
                   const color = memberColorMap.get(member.id);
                   const isOther = member.preferredReceivingMethod === "other";
                   return (
-                    <div key={member.id} className="bg-zinc-800/50 rounded-lg px-3 py-2">
+                    <div key={member.id} className="bg-surface-tertiary/50 rounded-lg px-3 py-2">
                       <div className="flex items-center gap-2">
-                        <span className={`w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center flex-shrink-0 ${color?.bg || "bg-zinc-700"} ${color?.text || "text-zinc-300"}`}>
+                        <span className={`w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center flex-shrink-0 ${color?.bg || "bg-border-secondary"} ${color?.text || "text-on-surface-secondary"}`}>
                           {member.name.charAt(0)}
                         </span>
                         <span className="flex-1 font-medium text-sm truncate">{member.name}</span>
@@ -447,7 +447,7 @@ export default function GroupPage() {
                             const val = e.target.value as ReceivingMethod;
                             updateMemberPreference(member.id, val, val === "other" ? (member.customReceivingMethod || "") : undefined);
                           }}
-                          className="text-[11px] bg-zinc-800 border border-zinc-700 rounded px-1.5 py-1 text-zinc-400"
+                          className="text-[11px] bg-surface-tertiary border border-border-secondary rounded px-1.5 py-1 text-on-surface-secondary"
                         >
                           {RECEIVING_METHODS.map((rm) => (
                             <option key={rm.value} value={rm.value}>{rm.label}</option>
@@ -456,7 +456,7 @@ export default function GroupPage() {
                         <button
                           onClick={() => setConfirmAction({ type: "deleteMember", id: member.id, name: member.name })}
                           aria-label={`${member.name}を削除`}
-                          className="text-zinc-600 hover:text-rose-400 active:text-rose-400 text-sm flex-shrink-0 w-8 h-8 flex items-center justify-center"
+                          className="text-on-surface-faint hover:text-rose-400 active:text-rose-400 text-sm flex-shrink-0 w-8 h-8 flex items-center justify-center"
                         >
                           ×
                         </button>
@@ -468,7 +468,7 @@ export default function GroupPage() {
                           placeholder="受取方法の詳細"
                           onBlur={(e) => updateMemberPreference(member.id, "other", e.target.value)}
                           onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
-                          className="mt-1.5 ml-8 w-[calc(100%-2rem)] px-2 py-1 text-xs bg-zinc-800 border border-zinc-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-zinc-600"
+                          className="mt-1.5 ml-8 w-[calc(100%-2rem)] px-2 py-1 text-xs bg-surface-tertiary border border-border-secondary rounded focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-on-surface-faint"
                         />
                       )}
                     </div>
@@ -481,13 +481,13 @@ export default function GroupPage() {
 
         {/* 招待URL */}
         {!settingsOpen && (
-          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-zinc-800">
-            <div className="flex-1 min-w-0 text-xs text-zinc-500 truncate">
+          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border-default">
+            <div className="flex-1 min-w-0 text-xs text-on-surface-tertiary truncate">
               {groupUrl}
             </div>
             <button
               onClick={handleCopyUrl}
-              className="flex-shrink-0 px-2.5 py-1.5 bg-zinc-800 text-zinc-300 rounded-lg text-xs font-medium active:bg-zinc-700"
+              className="flex-shrink-0 px-2.5 py-1.5 bg-surface-tertiary text-on-surface-secondary rounded-lg text-xs font-medium active:bg-border-secondary"
             >
               {urlCopied ? "✓" : "コピー"}
             </button>
@@ -517,7 +517,7 @@ export default function GroupPage() {
       {/* 空状態ガイド */}
       {group.expenses.length === 0 && group.members.length >= 2 && (
         <div className="text-center py-4 mb-6">
-          <p className="text-zinc-500 text-sm">まだ立て替えがありません</p>
+          <p className="text-on-surface-tertiary text-sm">まだ立て替えがありません</p>
         </div>
       )}
 
@@ -526,7 +526,7 @@ export default function GroupPage() {
         <section className="mb-8">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-bold pl-3 border-l-4 border-blue-500">立替一覧</h2>
-            <span className="text-xs text-zinc-500">合計 {formatCurrency(totalExpenses)}</span>
+            <span className="text-xs text-on-surface-tertiary">合計 {formatCurrency(totalExpenses)}</span>
           </div>
           <div className="space-y-2">
             {group.expenses
@@ -537,7 +537,7 @@ export default function GroupPage() {
 
                 if (isEditing) {
                   return (
-                    <div key={expense.id} className="bg-zinc-900 rounded-2xl border-2 border-blue-500 p-5 space-y-3">
+                    <div key={expense.id} className="bg-surface-secondary rounded-2xl border-2 border-blue-500 p-5 space-y-3">
                       <input
                         type="text"
                         value={editDesc}
@@ -545,7 +545,7 @@ export default function GroupPage() {
                         onCompositionStart={() => setEditDescComposing(true)}
                         onCompositionEnd={() => setEditDescComposing(false)}
                         placeholder="内容"
-                        className="w-full px-4 py-2.5 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-zinc-500"
+                        className="w-full px-4 py-2.5 border border-border-secondary bg-surface-tertiary rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-on-surface-tertiary"
                       />
                       <input
                         type="text"
@@ -556,23 +556,23 @@ export default function GroupPage() {
                           setEditAmount(v);
                         }}
                         placeholder="金額（円）"
-                        className="w-full px-4 py-2.5 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-zinc-500"
+                        className="w-full px-4 py-2.5 border border-border-secondary bg-surface-tertiary rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-on-surface-tertiary"
                       />
                       <div>
-                        <label className="block text-xs text-zinc-500 mb-1.5">日付（任意）</label>
+                        <label className="block text-xs text-on-surface-tertiary mb-1.5">日付（任意）</label>
                         <input
                           type="date"
                           value={editExpenseDate}
                           onChange={(e) => setEditExpenseDate(e.target.value)}
-                          className="w-full px-4 py-2.5 border border-zinc-700 bg-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                          className="w-full px-4 py-2.5 border border-border-secondary bg-surface-tertiary rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-zinc-500 mb-1.5">誰が支払った？</label>
+                        <label className="block text-xs text-on-surface-tertiary mb-1.5">誰が支払った？</label>
                         <select
                           value={editPaidBy}
                           onChange={(e) => setEditPaidBy(e.target.value)}
-                          className="w-full px-4 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-zinc-800 appearance-none"
+                          className="w-full px-4 py-2.5 border border-border-secondary rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-surface-tertiary appearance-none"
                         >
                           <option value="">選択してください</option>
                           {group.members.map((member) => (
@@ -581,11 +581,11 @@ export default function GroupPage() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs text-zinc-500 mb-1.5">支払い方法</label>
+                        <label className="block text-xs text-on-surface-tertiary mb-1.5">支払い方法</label>
                         <select
                           value={editPaymentMethod}
                           onChange={(e) => setEditPaymentMethod(e.target.value as PaymentMethod)}
-                          className="w-full px-4 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-zinc-800 appearance-none"
+                          className="w-full px-4 py-2.5 border border-border-secondary rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-surface-tertiary appearance-none"
                         >
                           {PAYMENT_METHODS.map((method) => (
                             <option key={method.value} value={method.value}>{method.label}</option>
@@ -594,7 +594,7 @@ export default function GroupPage() {
                       </div>
                       <div>
                         <div className="flex items-center justify-between mb-1.5">
-                          <label className="text-xs text-zinc-500">誰で割り勘？</label>
+                          <label className="text-xs text-on-surface-tertiary">誰で割り勘？</label>
                           <button
                             onClick={() => setEditSplitAmong(group.members.map((m) => m.id))}
                             className="text-xs text-blue-400 active:text-blue-300"
@@ -610,7 +610,7 @@ export default function GroupPage() {
                               className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
                                 editSplitAmong.includes(member.id)
                                   ? "bg-emerald-500 text-white border-emerald-500"
-                                  : "bg-zinc-800 border-zinc-700 text-zinc-300 active:bg-zinc-700"
+                                  : "bg-surface-tertiary border-border-secondary text-on-surface-secondary active:bg-border-secondary"
                               }`}
                             >
                               {member.name}
@@ -622,8 +622,8 @@ export default function GroupPage() {
                       {/* 割り勘方法（編集） */}
                       {editSplitAmong.length > 0 && (
                         <div>
-                          <label className="block text-xs text-zinc-500 mb-1.5">割り勘方法</label>
-                          <div className="flex rounded-xl overflow-hidden border border-zinc-800">
+                          <label className="block text-xs text-on-surface-tertiary mb-1.5">割り勘方法</label>
+                          <div className="flex rounded-xl overflow-hidden border border-border-default">
                             {([
                               { value: "equal" as UISplitMode, label: "均等" },
                               { value: "ratio" as UISplitMode, label: "比率" },
@@ -641,7 +641,7 @@ export default function GroupPage() {
                                 className={`flex-1 py-2 text-sm font-medium transition-colors ${
                                   editSplitMode === mode.value
                                     ? "bg-blue-500 text-white"
-                                    : "bg-zinc-900 text-zinc-400 active:bg-zinc-800"
+                                    : "bg-surface-secondary text-on-surface-secondary active:bg-surface-tertiary"
                                 }`}
                               >
                                 {mode.label}
@@ -652,12 +652,12 @@ export default function GroupPage() {
                           {/* 比率入力 */}
                           {editSplitMode === "ratio" && (
                             <div className="mt-3 space-y-2">
-                              <p className="text-xs text-zinc-500">各メンバーの比率を入力</p>
+                              <p className="text-xs text-on-surface-tertiary">各メンバーの比率を入力</p>
                               {editSplitAmong.map((memberId) => {
                                 const member = group.members.find((m) => m.id === memberId);
                                 return (
                                   <div key={memberId} className="flex items-center gap-3">
-                                    <span className="text-sm text-zinc-300 w-20 truncate">{member?.name}</span>
+                                    <span className="text-sm text-on-surface-secondary w-20 truncate">{member?.name}</span>
                                     <input
                                       type="text"
                                       inputMode="numeric"
@@ -666,14 +666,14 @@ export default function GroupPage() {
                                         const v = e.target.value.replace(/[^0-9]/g, "");
                                         setEditRatios((prev) => ({ ...prev, [memberId]: v }));
                                       }}
-                                      className="flex-1 px-3 py-2 border border-zinc-700 bg-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-center"
+                                      className="flex-1 px-3 py-2 border border-border-secondary bg-surface-tertiary rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-center"
                                     />
                                   </div>
                                 );
                               })}
                               {parseInt(editAmount, 10) > 0 && (
-                                <div className="bg-zinc-800/30 rounded-xl p-3 mt-2">
-                                  <p className="text-xs text-zinc-500 mb-2">1人あたり金額（目安）</p>
+                                <div className="bg-surface-tertiary/30 rounded-xl p-3 mt-2">
+                                  <p className="text-xs text-on-surface-tertiary mb-2">1人あたり金額（目安）</p>
                                   <div className="space-y-1">
                                     {(() => {
                                       const numAmount = parseInt(editAmount, 10);
@@ -684,8 +684,8 @@ export default function GroupPage() {
                                         const memberShare = Math.round(numAmount * ratio / totalRatio);
                                         return (
                                           <div key={memberId} className="flex justify-between text-xs">
-                                            <span className="text-zinc-400">{member?.name} ({ratio})</span>
-                                            <span className="text-zinc-300">{formatCurrency(memberShare)}</span>
+                                            <span className="text-on-surface-secondary">{member?.name} ({ratio})</span>
+                                            <span className="text-on-surface-secondary">{formatCurrency(memberShare)}</span>
                                           </div>
                                         );
                                       });
@@ -699,12 +699,12 @@ export default function GroupPage() {
                           {/* 金額指定入力 */}
                           {editSplitMode === "fixed" && (
                             <div className="mt-3 space-y-2">
-                              <p className="text-xs text-zinc-500">各メンバーの負担額を入力</p>
+                              <p className="text-xs text-on-surface-tertiary">各メンバーの負担額を入力</p>
                               {editSplitAmong.map((memberId) => {
                                 const member = group.members.find((m) => m.id === memberId);
                                 return (
                                   <div key={memberId} className="flex items-center gap-3">
-                                    <span className="text-sm text-zinc-300 w-20 truncate">{member?.name}</span>
+                                    <span className="text-sm text-on-surface-secondary w-20 truncate">{member?.name}</span>
                                     <input
                                       type="text"
                                       inputMode="numeric"
@@ -714,9 +714,9 @@ export default function GroupPage() {
                                         setEditFixedAmounts((prev) => ({ ...prev, [memberId]: v }));
                                       }}
                                       placeholder="0"
-                                      className="flex-1 px-3 py-2 border border-zinc-700 bg-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-right"
+                                      className="flex-1 px-3 py-2 border border-border-secondary bg-surface-tertiary rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-right"
                                     />
-                                    <span className="text-zinc-500 text-xs">円</span>
+                                    <span className="text-on-surface-tertiary text-xs">円</span>
                                   </div>
                                 );
                               })}
@@ -725,7 +725,7 @@ export default function GroupPage() {
                                   (() => {
                                     const total = editSplitAmong.reduce((sum, mid) => sum + (parseInt(editFixedAmounts[mid] || "0", 10) || 0), 0);
                                     const numAmount = parseInt(editAmount, 10);
-                                    return total === numAmount ? "text-emerald-400" : total > numAmount ? "text-rose-400" : "text-zinc-500";
+                                    return total === numAmount ? "text-emerald-400" : total > numAmount ? "text-rose-400" : "text-on-surface-tertiary";
                                   })()
                                 }`}>
                                   {(() => {
@@ -745,9 +745,9 @@ export default function GroupPage() {
                           {editSplitMode === "discount" && (
                             <div className="mt-3 space-y-3">
                               {editAdjustments.map((adj, index) => (
-                                <div key={index} className="bg-zinc-800/50 rounded-xl p-3 space-y-2">
+                                <div key={index} className="bg-surface-tertiary/50 rounded-xl p-3 space-y-2">
                                   <div className="flex items-center justify-between">
-                                    <span className="text-xs text-zinc-500">割引 {index + 1}</span>
+                                    <span className="text-xs text-on-surface-tertiary">割引 {index + 1}</span>
                                     <button
                                       onClick={() => setEditAdjustments((prev) => prev.filter((_, i) => i !== index))}
                                       className="text-xs text-rose-400 active:text-rose-300"
@@ -756,7 +756,7 @@ export default function GroupPage() {
                                     </button>
                                   </div>
                                   <div>
-                                    <label className="block text-xs text-zinc-500 mb-1">対象メンバー</label>
+                                    <label className="block text-xs text-on-surface-tertiary mb-1">対象メンバー</label>
                                     <div className="flex flex-wrap gap-1.5">
                                       {group.members
                                         .filter((m) => editSplitAmong.includes(m.id))
@@ -775,7 +775,7 @@ export default function GroupPage() {
                                             className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
                                               adj.memberIds.includes(member.id)
                                                 ? "bg-orange-500 text-white border-orange-500"
-                                                : "bg-zinc-800 border-zinc-700 text-zinc-400 active:bg-zinc-700"
+                                                : "bg-surface-tertiary border-border-secondary text-on-surface-secondary active:bg-border-secondary"
                                             }`}
                                           >
                                             {member.name}
@@ -784,9 +784,9 @@ export default function GroupPage() {
                                     </div>
                                   </div>
                                   <div>
-                                    <label className="block text-xs text-zinc-500 mb-1">割引額（1人あたり）</label>
+                                    <label className="block text-xs text-on-surface-tertiary mb-1">割引額（1人あたり）</label>
                                     <div className="flex items-center gap-2">
-                                      <span className="text-zinc-500 text-sm">-</span>
+                                      <span className="text-on-surface-tertiary text-sm">-</span>
                                       <input
                                         type="text"
                                         inputMode="numeric"
@@ -796,19 +796,19 @@ export default function GroupPage() {
                                           setEditAdjustments((prev) => prev.map((a, i) => (i === index ? { ...a, amount: v } : a)));
                                         }}
                                         placeholder="1000"
-                                        className="flex-1 px-3 py-2 border border-zinc-700 bg-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-zinc-600"
+                                        className="flex-1 px-3 py-2 border border-border-secondary bg-surface-tertiary rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-on-surface-faint"
                                       />
-                                      <span className="text-zinc-500 text-sm">円</span>
+                                      <span className="text-on-surface-tertiary text-sm">円</span>
                                     </div>
                                   </div>
                                   <div>
-                                    <label className="block text-xs text-zinc-500 mb-1">メモ（任意）</label>
+                                    <label className="block text-xs text-on-surface-tertiary mb-1">メモ（任意）</label>
                                     <input
                                       type="text"
                                       value={adj.memo}
                                       onChange={(e) => setEditAdjustments((prev) => prev.map((a, i) => (i === index ? { ...a, memo: e.target.value } : a)))}
                                       placeholder="例: ノンアル"
-                                      className="w-full px-3 py-2 border border-zinc-700 bg-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-zinc-600"
+                                      className="w-full px-3 py-2 border border-border-secondary bg-surface-tertiary rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-on-surface-faint"
                                     />
                                   </div>
                                 </div>
@@ -816,7 +816,7 @@ export default function GroupPage() {
 
                               <button
                                 onClick={() => setEditAdjustments((prev) => [...prev, { memberIds: [], amount: "", memo: "" }])}
-                                className="w-full py-2 border border-dashed border-zinc-700 text-zinc-500 rounded-xl text-sm active:bg-zinc-800"
+                                className="w-full py-2 border border-dashed border-border-secondary text-on-surface-tertiary rounded-xl text-sm active:bg-surface-tertiary"
                               >
                                 + 割引を追加
                               </button>
@@ -825,8 +825,8 @@ export default function GroupPage() {
                               {editAdjustments.some((a) => a.memberIds.length > 0 && parseInt(a.amount, 10) > 0) &&
                                 parseInt(editAmount, 10) > 0 &&
                                 editSplitAmong.length > 0 && (
-                                  <div className="bg-zinc-800/30 rounded-xl p-3">
-                                    <p className="text-xs text-zinc-500 mb-2">割引後の1人あたり金額（目安）</p>
+                                  <div className="bg-surface-tertiary/30 rounded-xl p-3">
+                                    <p className="text-xs text-on-surface-tertiary mb-2">割引後の1人あたり金額（目安）</p>
                                     <div className="space-y-1">
                                       {(() => {
                                         const tempExpense: Expense = {
@@ -847,8 +847,8 @@ export default function GroupPage() {
                                           const diff = share - baseShare;
                                           return (
                                             <div key={memberId} className="flex justify-between text-xs">
-                                              <span className="text-zinc-400">{member?.name}</span>
-                                              <span className={diff !== 0 ? "text-orange-400" : "text-zinc-300"}>
+                                              <span className="text-on-surface-secondary">{member?.name}</span>
+                                              <span className={diff !== 0 ? "text-orange-400" : "text-on-surface-secondary"}>
                                                 {formatCurrency(share)}
                                                 {diff !== 0 && ` (${diff > 0 ? "+" : ""}${formatCurrency(diff)})`}
                                               </span>
@@ -867,7 +867,7 @@ export default function GroupPage() {
                       <div className="flex gap-2">
                         <button
                           onClick={cancelEditing}
-                          className="flex-1 py-2.5 border border-zinc-700 text-zinc-400 rounded-xl font-medium text-sm active:bg-zinc-800"
+                          className="flex-1 py-2.5 border border-border-secondary text-on-surface-secondary rounded-xl font-medium text-sm active:bg-surface-tertiary"
                         >
                           キャンセル
                         </button>
@@ -897,22 +897,22 @@ export default function GroupPage() {
                 return (
                   <div
                     key={expense.id}
-                    className="bg-zinc-900 rounded-xl border border-zinc-800 p-4 cursor-pointer active:bg-zinc-800/80 transition-colors"
+                    className="bg-surface-secondary rounded-xl border border-border-default p-4 cursor-pointer active:bg-surface-tertiary/80 transition-colors"
                     onClick={() => startEditing(expense)}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
                           <span className="font-semibold text-[15px] truncate">{expense.description}</span>
-                          <svg className="w-3 h-3 text-zinc-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <svg className="w-3 h-3 text-on-surface-faint flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                           </svg>
                         </div>
-                        <div className="flex items-center gap-1.5 mt-1 text-xs text-zinc-500">
+                        <div className="flex items-center gap-1.5 mt-1 text-xs text-on-surface-tertiary">
                           {expense.expenseDate && <span>{expense.expenseDate}</span>}
-                          {expense.expenseDate && <span className="text-zinc-700">·</span>}
-                          <span className={payerColor?.text || "text-zinc-400"}>{payer?.name || "不明"}</span>
-                          <span className="text-zinc-700">·</span>
+                          {expense.expenseDate && <span className="text-on-surface-faint">·</span>}
+                          <span className={payerColor?.text || "text-on-surface-secondary"}>{payer?.name || "不明"}</span>
+                          <span className="text-on-surface-faint">·</span>
                           <span>{PAYMENT_METHODS.find((m) => m.value === expense.paymentMethod)?.label || "現金"}</span>
                         </div>
                       </div>
@@ -929,7 +929,7 @@ export default function GroupPage() {
                           return (
                             <span
                               key={memberId}
-                              className={`w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center ${color?.bg || "bg-zinc-700"} ${color?.text || "text-zinc-300"}`}
+                              className={`w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center ${color?.bg || "bg-border-secondary"} ${color?.text || "text-on-surface-secondary"}`}
                               title={member?.name}
                             >
                               {initial}
@@ -939,7 +939,7 @@ export default function GroupPage() {
                       </div>
                       <div className="flex items-center gap-1">
                         {splitMode === "equal" && !hasAdjustments && (
-                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-zinc-700/60 text-zinc-400">均等</span>
+                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-border-secondary/60 text-on-surface-secondary">均等</span>
                         )}
                         {splitMode === "ratio" && (
                           <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-400">比率</span>
@@ -962,8 +962,8 @@ export default function GroupPage() {
       {/* 端数処理（コンパクト） */}
       {group.expenses.length > 0 && group.members.length >= 2 && (
         <div className="mb-4 flex items-center gap-2">
-          <span className="text-xs text-zinc-500 flex-shrink-0">端数</span>
-          <div className="flex rounded-lg overflow-hidden border border-zinc-800 flex-1">
+          <span className="text-xs text-on-surface-tertiary flex-shrink-0">端数</span>
+          <div className="flex rounded-lg overflow-hidden border border-border-default flex-1">
             {ROUNDING_UNITS.map((unit) => (
               <button
                 key={unit.value}
@@ -971,7 +971,7 @@ export default function GroupPage() {
                 className={`flex-1 py-1.5 text-xs font-medium transition-colors ${
                   roundingUnit === unit.value
                     ? "bg-blue-500 text-white"
-                    : "bg-zinc-900 text-zinc-500 active:bg-zinc-800"
+                    : "bg-surface-secondary text-on-surface-tertiary active:bg-surface-tertiary"
                 }`}
               >
                 {unit.label}
@@ -1006,7 +1006,7 @@ export default function GroupPage() {
           )}
 
           {settlements.length === 0 ? (
-            <p className="text-zinc-500 text-sm py-4 text-center">精算の必要はありません</p>
+            <p className="text-on-surface-tertiary text-sm py-4 text-center">精算の必要はありません</p>
           ) : (
             <div className="space-y-2">
               {settlements.map((s, i) => {
@@ -1019,7 +1019,7 @@ export default function GroupPage() {
                     className={`rounded-xl p-4 flex items-center gap-3 transition-colors ${
                       isCompleted
                         ? "bg-emerald-500/10 border border-emerald-500/30"
-                        : "bg-zinc-900/80 border border-zinc-700/50"
+                        : "bg-surface-secondary/80 border border-border-secondary/50"
                     }`}
                   >
                     <button
@@ -1058,7 +1058,7 @@ export default function GroupPage() {
               {/* 明細トグル */}
               <button
                 onClick={() => setDetailOpen((prev) => !prev)}
-                className="w-full flex items-center justify-center gap-1.5 py-2.5 border border-zinc-800 text-zinc-400 rounded-xl font-medium text-sm active:bg-zinc-800"
+                className="w-full flex items-center justify-center gap-1.5 py-2.5 border border-border-default text-on-surface-secondary rounded-xl font-medium text-sm active:bg-surface-tertiary"
               >
                 明細を見る
                 <svg
@@ -1092,15 +1092,15 @@ export default function GroupPage() {
                 });
 
                 return (
-                  <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+                  <div className="bg-surface-secondary border border-border-default rounded-xl overflow-hidden">
                     {/* タブ */}
-                    <div className="flex border-b border-zinc-800">
+                    <div className="flex border-b border-border-default">
                       <button
                         onClick={() => setDetailTab("balance")}
                         className={`flex-1 py-2.5 text-xs font-medium transition-colors ${
                           detailTab === "balance"
                             ? "text-blue-400 border-b-2 border-blue-400"
-                            : "text-zinc-500"
+                            : "text-on-surface-tertiary"
                         }`}
                       >
                         貸し借り
@@ -1110,7 +1110,7 @@ export default function GroupPage() {
                         className={`flex-1 py-2.5 text-xs font-medium transition-colors ${
                           detailTab === "spending"
                             ? "text-blue-400 border-b-2 border-blue-400"
-                            : "text-zinc-500"
+                            : "text-on-surface-tertiary"
                         }`}
                       >
                         支出
@@ -1124,15 +1124,15 @@ export default function GroupPage() {
                             const balance = balances.get(member.id) || 0;
                             const isPositive = balance > 0;
                             return (
-                              <div key={member.id} className="flex items-center justify-between py-2 border-b border-zinc-800 last:border-0">
+                              <div key={member.id} className="flex items-center justify-between py-2 border-b border-border-default last:border-0">
                                 <span className="font-medium text-sm">{member.name}</span>
-                                <span className={`font-bold text-sm ${isPositive ? "text-blue-400" : balance < 0 ? "text-rose-400" : "text-zinc-400"}`}>
+                                <span className={`font-bold text-sm ${isPositive ? "text-blue-400" : balance < 0 ? "text-rose-400" : "text-on-surface-secondary"}`}>
                                   {isPositive ? "+" : ""}{formatCurrency(Math.round(balance))}
                                 </span>
                               </div>
                             );
                           })}
-                          <p className="text-[10px] text-zinc-600 pt-2 text-center">
+                          <p className="text-[10px] text-on-surface-faint pt-2 text-center">
                             <span className="text-blue-400">青字</span>は受取 / <span className="text-rose-400">赤字</span>は支払
                           </p>
                         </div>
@@ -1141,14 +1141,14 @@ export default function GroupPage() {
                           {group.members.map((member) => {
                             const spent = memberSpending.get(member.id) || 0;
                             return (
-                              <div key={member.id} className="flex items-center justify-between py-2 border-b border-zinc-800 last:border-0">
+                              <div key={member.id} className="flex items-center justify-between py-2 border-b border-border-default last:border-0">
                                 <span className="font-medium text-sm">{member.name}</span>
                                 <span className="font-bold text-sm">{formatCurrency(Math.round(spent))}</span>
                               </div>
                             );
                           })}
-                          <div className="flex items-center justify-between py-2 border-t-2 border-zinc-700 mt-1">
-                            <span className="font-bold text-xs text-zinc-400">合計</span>
+                          <div className="flex items-center justify-between py-2 border-t-2 border-border-secondary mt-1">
+                            <span className="font-bold text-xs text-on-surface-secondary">合計</span>
                             <span className="font-bold text-sm">{formatCurrency(totalExpenses)}</span>
                           </div>
                         </div>
@@ -1161,7 +1161,7 @@ export default function GroupPage() {
               <div className="flex gap-2">
                 <button
                   onClick={handleCopySettlementUrl}
-                  className="flex-1 py-2.5 bg-zinc-800 text-zinc-300 rounded-xl font-medium text-xs active:bg-zinc-700"
+                  className="flex-1 py-2.5 bg-surface-tertiary text-on-surface-secondary rounded-xl font-medium text-xs active:bg-border-secondary"
                 >
                   {copiedUrl ? "✓ コピー済み" : "URLをコピー"}
                 </button>
@@ -1190,7 +1190,7 @@ export default function GroupPage() {
         </button>
       )}
 
-      <p className="mt-6 text-center text-xs text-zinc-600">
+      <p className="mt-6 text-center text-xs text-on-surface-faint">
         支払い回数を最小化して計算しています
       </p>
 

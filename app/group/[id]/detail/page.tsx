@@ -17,7 +17,7 @@ export default function DetailPage() {
   if (loading) {
     return (
       <div className="p-6 text-center py-20">
-        <p className="text-zinc-500">読み込み中...</p>
+        <p className="text-on-surface-tertiary">読み込み中...</p>
       </div>
     );
   }
@@ -25,7 +25,7 @@ export default function DetailPage() {
   if (error || !group) {
     return (
       <div className="p-6 text-center py-20">
-        <p className="text-zinc-500 mb-4">{error || "グループが見つかりません"}</p>
+        <p className="text-on-surface-tertiary mb-4">{error || "グループが見つかりません"}</p>
         <Link href="/" className="text-blue-400">ホームに戻る</Link>
       </div>
     );
@@ -67,13 +67,13 @@ export default function DetailPage() {
       </div>
 
       {/* タブ切替 */}
-      <div className="flex rounded-xl overflow-hidden border border-zinc-800 mb-6">
+      <div className="flex rounded-xl overflow-hidden border border-border-default mb-6">
         <button
           onClick={() => setTab("balance")}
           className={`flex-1 py-3 text-sm font-medium transition-colors ${
             tab === "balance"
               ? "bg-blue-500 text-white"
-              : "bg-zinc-900 text-zinc-400 active:bg-zinc-800"
+              : "bg-surface-secondary text-on-surface-secondary active:bg-surface-tertiary"
           }`}
         >
           貸し借り
@@ -83,7 +83,7 @@ export default function DetailPage() {
           className={`flex-1 py-3 text-sm font-medium transition-colors ${
             tab === "spending"
               ? "bg-blue-500 text-white"
-              : "bg-zinc-900 text-zinc-400 active:bg-zinc-800"
+              : "bg-surface-secondary text-on-surface-secondary active:bg-surface-tertiary"
           }`}
         >
           支出
@@ -96,15 +96,15 @@ export default function DetailPage() {
             const balance = balances.get(member.id) || 0;
             const isPositive = balance > 0;
             return (
-              <div key={member.id} className="flex items-center justify-between py-3 border-b border-zinc-800">
+              <div key={member.id} className="flex items-center justify-between py-3 border-b border-border-default">
                 <span className="font-medium text-sm">{member.name}</span>
-                <span className={`font-bold text-sm ${isPositive ? "text-blue-400" : balance < 0 ? "text-rose-400" : "text-zinc-400"}`}>
+                <span className={`font-bold text-sm ${isPositive ? "text-blue-400" : balance < 0 ? "text-rose-400" : "text-on-surface-secondary"}`}>
                   {isPositive ? "+" : ""}{formatCurrency(Math.round(balance))}
                 </span>
               </div>
             );
           })}
-          <p className="text-xs text-zinc-600 pt-3 text-center">
+          <p className="text-xs text-on-surface-faint pt-3 text-center">
             <span className="text-blue-400">青字</span>は受け取るべき金額 / <span className="text-rose-400">赤字</span>は支払うべき金額
           </p>
         </div>
@@ -114,14 +114,14 @@ export default function DetailPage() {
             {group.members.map((member) => {
               const memberSpending = spending.get(member.id) || 0;
               return (
-                <div key={member.id} className="flex items-center justify-between py-3 border-b border-zinc-800">
+                <div key={member.id} className="flex items-center justify-between py-3 border-b border-border-default">
                   <span className="font-medium text-sm">{member.name}</span>
                   <span className="font-bold text-sm">{formatCurrency(Math.round(memberSpending))}</span>
                 </div>
               );
             })}
           </div>
-          <div className="flex items-center justify-between py-3 border-t-2 border-zinc-700 mt-2">
+          <div className="flex items-center justify-between py-3 border-t-2 border-border-secondary mt-2">
             <span className="font-bold text-sm">グループ支出合計</span>
             <span className="font-bold text-sm">{formatCurrency(totalSpending)}</span>
           </div>
@@ -130,7 +130,7 @@ export default function DetailPage() {
 
       <Link
         href={`/group/${group.id}`}
-        className="block w-full text-center py-3 border border-zinc-800 text-zinc-400 rounded-xl font-medium text-sm active:bg-zinc-800 mt-6"
+        className="block w-full text-center py-3 border border-border-default text-on-surface-secondary rounded-xl font-medium text-sm active:bg-surface-tertiary mt-6"
       >
         戻る
       </Link>

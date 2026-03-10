@@ -40,7 +40,7 @@ export default function SharedPage() {
   if (error) {
     return (
       <div className="p-6 text-center py-20">
-        <p className="text-gray-400 mb-4">
+        <p className="text-on-surface-secondary mb-4">
           共有リンクが無効です
         </p>
         <a href="/" className="text-blue-500">
@@ -52,7 +52,7 @@ export default function SharedPage() {
 
   return (
     <div className="p-6 text-center py-20">
-      <p className="text-gray-400">グループを読み込んでいます...</p>
+      <p className="text-on-surface-secondary">グループを読み込んでいます...</p>
     </div>
   );
 }
